@@ -1,0 +1,7 @@
+{
+  "buildCommand": "npm install && npm run build",
+  "outputDirectory": "zentra-app/dist",
+  "installCommand": "cd zentra-app && npm install --legacy-peer-deps",
+  "framework": "vite",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

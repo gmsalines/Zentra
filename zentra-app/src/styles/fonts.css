@@ -1,0 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Marcellus&family=Outfit:wght@300;400;500;600&display=swap');
+
+input::placeholder,
+textarea::placeholder {
+  color: #374260;
+  opacity: 1;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
