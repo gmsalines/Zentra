@@ -950,6 +950,7 @@ const CHAT_CHIPS = ["academia feita","anotar compra","quanto gastei esse mês","
 
 function ChatScreen() {
   const t = useT();
+  const { prefs } = usePrefs();
   const [msgs, setMsgs] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
@@ -980,14 +981,20 @@ function ChatScreen() {
     setThinking(true);
 
     try {
+      const langHint = prefs.lang === "pt"
+        ? "IMPORTANTE: Responda SOMENTE em português brasileiro. Nunca em inglês."
+        : prefs.lang === "es"
+        ? "IMPORTANTE: Responde SOLO en español. Nunca en inglés."
+        : "IMPORTANT: Respond ONLY in English.";
+      const msgWithLang = `${langHint}\n\n${text}`;
       const history = msgs.slice(-8).map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.text }));
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { "Authorization": `Bearer ${GROQ_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: GROQ_MODEL,
-          messages: [{ role: "system", content: GROQ_SYSTEM }, ...history, { role: "user", content: text }],
-          temperature: 0.5,
+          messages: [{ role: "system", content: GROQ_SYSTEM }, ...history, { role: "user", content: msgWithLang }],
+          temperature: 0.4,
           max_tokens: 400,
         }),
       });
@@ -1004,7 +1011,7 @@ function ChatScreen() {
       const aiMsg: ChatMsg = {
         id: Date.now() + 1,
         role: "ai",
-        text: parsed.reply ?? "Done!",
+        text: parsed.reply ?? (prefs.lang === "pt" ? "Feito!" : prefs.lang === "es" ? "¡Listo!" : "Done!"),
         badge: { space: badgeSpace, color: BADGE_COLORS[badgeSpace] ?? "#7BAA8C", note: parsed.badge?.note ?? "" },
       };
       setMsgs(p => [...p, aiMsg]);
