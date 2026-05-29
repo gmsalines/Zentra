@@ -99,7 +99,7 @@ const T = {
     spaces_sub: "Organize em torno do que realmente importa para você.",
     spaces_add: "Adicionar espaço personalizado...",
     spaces_cta: "Configurar meu Zentra",
-    nav: { today: "Hoje", chat: "Zentra", spaces: "Espaços", history: "Histórico" },
+    nav: { today: "Início", chat: "Chat", spaces: "Espaços", history: "Histórico" },
     greet: (h: number) => h < 12 ? "Bom dia" : h < 17 ? "Boa tarde" : "Boa noite",
     tasks_done: (d: number, t: number) => `${d} de ${t} tarefas concluídas`,
     section: { today: "Hoje", upcoming: "Em breve", reminders: "Lembretes" },
@@ -135,7 +135,7 @@ const T = {
     spaces_sub: "Organízate en torno a lo que realmente importa.",
     spaces_add: "Agregar espacio personalizado...",
     spaces_cta: "Configurar mi Zentra",
-    nav: { today: "Hoy", chat: "Zentra", spaces: "Espacios", history: "Historial" },
+    nav: { today: "Inicio", chat: "Chat", spaces: "Espacios", history: "Historial" },
     greet: (h: number) => h < 12 ? "Buenos días" : h < 17 ? "Buenas tardes" : "Buenas noches",
     tasks_done: (d: number, t: number) => `${d} de ${t} tareas completadas`,
     section: { today: "Hoy", upcoming: "Próximas", reminders: "Recordatorios" },
@@ -171,7 +171,7 @@ const T = {
     spaces_sub: "Organize around what actually matters to you.",
     spaces_add: "Add a custom space...",
     spaces_cta: "Set up my Zentra",
-    nav: { today: "Today", chat: "Zentra", spaces: "Spaces", history: "History" },
+    nav: { today: "Home", chat: "Chat", spaces: "Spaces", history: "History" },
     greet: (h: number) => h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening",
     tasks_done: (d: number, t: number) => `${d} of ${t} tasks complete`,
     section: { today: "Today", upcoming: "Upcoming", reminders: "Reminders" },
@@ -1602,8 +1602,8 @@ function HistoryScreen() {
         <TopBar />
         <div className="px-6 pt-1 pb-4">
           <h1 style={{ fontFamily:f.display, fontSize:"26px", fontWeight:400, color:c.text, letterSpacing:"0.01em" }}>
-            {t.history[0]}{" "}
-            <span style={{ color:c.silverMid, fontStyle:"italic" }}>{t.history[1]}</span>
+            {t.history_title[0]}{" "}
+            <span style={{ color:c.silverMid, fontStyle:"italic" }}>{t.history_title[1]}</span>
           </h1>
         </div>
 
