@@ -196,7 +196,7 @@ const T = {
 // ─── Backend config ───────────────────────────────────────────────────────────
 const SB_URL  = "https://raboikyezplxhxxropvf.supabase.co";
 const SB_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhYm9pa3llenBseGh4eHJvcHZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MTQyNjIsImV4cCI6MjA5NTA5MDI2Mn0.7IID_hKsYXge6PK7n2JX0F10dVDMtbLJ068mWkH6Kpw";
-const GROQ_KEY = "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";
+const GROQ_KEY = import.meta.env.VITE_GROQ_KEY ?? "";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 
 const SB_H = { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}`, "Content-Type": "application/json", "Prefer": "return=representation" };
