@@ -103,7 +103,7 @@ const T = {
     greet: (h: number) => h < 12 ? "Bom dia" : h < 17 ? "Boa tarde" : "Boa noite",
     tasks_done: (d: number, t: number) => `${d} de ${t} tarefas concluídas`,
     section: { today: "Hoje", upcoming: "Em breve", reminders: "Lembretes" },
-    spaces_label: { work: "Trabalho", health: "Saúde", finance: "Finanças", home: "Casa", shopping: "Compras", books: "Livros" },
+    spaces_label: { work: "Trabalho", health: "Saúde", finance: "Finanças", home: "Casa", shopping: "Compras", books: "Livros", brinta: "Trabalho", cliente: "Clientes", pessoal: "Pessoal", estudo: "Estudo", saude: "Saúde", financas: "Finanças", casa: "Casa", compras: "Compras", reminder: "Lembrete" },
     chat_placeholder: "O que você tem em mente?",
     chat_sub: "Me conta o que aconteceu.",
     chat_date: "Hoje",
@@ -139,7 +139,7 @@ const T = {
     greet: (h: number) => h < 12 ? "Buenos días" : h < 17 ? "Buenas tardes" : "Buenas noches",
     tasks_done: (d: number, t: number) => `${d} de ${t} tareas completadas`,
     section: { today: "Hoy", upcoming: "Próximas", reminders: "Recordatorios" },
-    spaces_label: { work: "Trabajo", health: "Salud", finance: "Finanzas", home: "Hogar", shopping: "Compras", books: "Libros" },
+    spaces_label: { work: "Trabajo", health: "Salud", finance: "Finanzas", home: "Hogar", shopping: "Compras", books: "Libros", brinta: "Trabajo", cliente: "Clientes", pessoal: "Personal", estudo: "Estudio", saude: "Salud", financas: "Finanzas", casa: "Hogar", compras: "Compras", reminder: "Recordatorio" },
     chat_placeholder: "¿Qué tienes en mente?",
     chat_sub: "Cuéntame qué pasó.",
     chat_date: "Hoy",
@@ -175,7 +175,7 @@ const T = {
     greet: (h: number) => h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening",
     tasks_done: (d: number, t: number) => `${d} of ${t} tasks complete`,
     section: { today: "Today", upcoming: "Upcoming", reminders: "Reminders" },
-    spaces_label: { work: "Work", health: "Health", finance: "Finance", home: "Home", shopping: "Shopping", books: "Books" },
+    spaces_label: { work: "Work", health: "Health", finance: "Finance", home: "Home", shopping: "Shopping", books: "Books", brinta: "Work", cliente: "Clients", pessoal: "Personal", estudo: "Study", saude: "Health", financas: "Finance", casa: "Home", compras: "Shopping", reminder: "Reminder" },
     chat_placeholder: "What's on your mind?",
     chat_sub: "Just tell me what happened.",
     chat_date: "Today",
@@ -891,8 +891,18 @@ function HomeScreen({ setScreen }: { setScreen:(s:Screen)=>void }) {
 
 const GROQ_SYSTEM = `You are Zentra's AI assistant for Gabriela (Gabi), a personal productivity app.
 Gabi is Brazilian, lives in Uruguay, moves to São Paulo in July 2026.
-She has tasks (brinta=work, cliente=clients, pessoal=personal, estudo=study), bills, expenses, and health logs.
+She has tasks, bills, expenses, and health logs.
 Today is ${new Date().toISOString().slice(0,10)}.
+
+Task categories (use the exact id in "cat"):
+- brinta = trabalho / work tasks
+- cliente = client tasks
+- pessoal = personal tasks
+- estudo = study tasks
+- saude = health tasks
+- financas = finance tasks
+- casa = home tasks
+- compras = shopping tasks
 
 When the user sends a message, respond with ONLY valid JSON (no markdown) in this shape:
 {
@@ -901,17 +911,18 @@ When the user sends a message, respond with ONLY valid JSON (no markdown) in thi
     "type": "add_task" | "complete_task" | "log_health" | "add_expense" | "none",
     "data": {}
   },
-  "badge": { "space": "health|work|finance|personal|reminder", "note": "what was done" }
+  "badge": { "space": "saude|brinta|financas|pessoal|estudo|casa|compras|cliente|reminder", "note": "short description of what was done in the user's language" }
 }
 
 Action data shapes:
-- add_task: { text, cat ("brinta"|"pessoal"|"estudo"), prio ("alta"|"media"|"baixa"), due (ISO date or null) }
+- add_task: { text, cat ("brinta"|"cliente"|"pessoal"|"estudo"|"saude"|"financas"|"casa"|"compras"), prio ("alta"|"media"|"baixa"), due (ISO date or null) }
 - complete_task: { text_hint (partial task name to match) }
 - log_health: { tipo ("academia"|"peso"|"alimentacao"|"sono"|"agua"), valor, notas, data (ISO date) }
 - add_expense: { descricao, val (number), cur ("BRL"|"UYU"|"USD"), cat, banco ("nubank"|"itau") }
 - none: {}
 
-Keep replies short (1-2 sentences), warm, practical. Match user's language (PT/ES/EN).`;
+Keep replies short (1-2 sentences), warm, practical. Match user's language (PT/ES/EN).
+IMPORTANT: The "note" in badge must always be in the same language the user wrote (PT/ES/EN), never in English if the user wrote in Portuguese.`;
 
 type ChatMsg = {
   id: number;
@@ -1052,7 +1063,7 @@ function ChatScreen() {
                   <span style={{ fontFamily:f.ui, fontSize:"11px", fontWeight:400, color:msg.badge.color }}>
                     {msg.badge.note}
                   </span>
-                  <Chip label={msg.badge.space} color={msg.badge.color} />
+                  <Chip label={(t.spaces_label as any)[msg.badge.space] ?? msg.badge.space} color={msg.badge.color} />
                 </div>
               )}
             </motion.div>
