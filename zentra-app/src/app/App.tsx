@@ -475,7 +475,7 @@ const THEME_PREVIEW: Record<ThemeKey, { bg:string; silver:string; accent:string 
   indigo:    { bg:"#0A0814", silver:"#C4B5FD", accent:"#F97316" },
 };
 
-const LANG_FLAGS: Record<LangKey, string> = { pt:"🇧🇷", es:"🇦🇷", en:"🇺🇸" };
+const LANG_FLAGS: Record<LangKey, string> = { pt:"PT", es:"ES", en:"EN" };
 const LANG_NAMES: Record<LangKey, string> = { pt:"Português", es:"Español", en:"English" };
 
 function OnboardStyle({ onNext }: { onNext:()=>void }) {
@@ -565,7 +565,7 @@ function OnboardStyle({ onNext }: { onNext:()=>void }) {
                     style={{ background:on?"var(--c-btn-bg-start)":"rgba(255,255,255,0.025)",
                       border:on?"1px solid var(--c-btn-border)":"1px solid var(--c-glass-border)" }}
                     whileTap={{ scale:0.95 }}>
-                    <span style={{ fontSize:"22px" }}>{LANG_FLAGS[lg]}</span>
+                    <span style={{ fontFamily:f.display, fontSize:"18px", fontWeight:400, letterSpacing:"0.05em" }}>{LANG_FLAGS[lg]}</span>
                     <span style={{ fontFamily:f.ui, fontSize:"11px", fontWeight:on?500:300,
                       color:on?c.text:c.textFaint }}>
                       {LANG_NAMES[lg]}
