@@ -9,7 +9,7 @@ import {
   Pill, RefreshCw, ChevronRight, Dumbbell, Droplets, Check, Flame,
   Activity, Sparkles, User, Moon, Sun, MoreHorizontal, Edit2, GripVertical,
   SlidersHorizontal, CheckCircle2, ArrowRight, Minus, Globe, Palette,
-, Star} from "lucide-react";
+  Star} from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Screen = "onboard1" | "onboard_style" | "onboard2" | "home" | "chat" | "spaces" | "space_detail" | "history";
