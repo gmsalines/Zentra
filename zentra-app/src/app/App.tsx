@@ -1420,14 +1420,29 @@ function SpaceDetailScreen({ spaceId, goBack }: { spaceId:string; goBack:()=>voi
 
         {/* Blocks */}
         <div className="px-5 flex flex-col gap-4">
-          {blockData.length === 0 ? (
-            <GlassCard className="p-8 flex flex-col items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                style={{ background:`${space.color}16`, border:`1px solid ${space.color}28` }}>
+          {SPACE_TO_CAT[spaceId] ? (
+            tasks.length === 0 ? (
+              <GlassCard className="p-8 flex flex-col items-center gap-3">
                 <Icon size={20} style={{ color:space.color, strokeWidth:1.5 }} />
-              </div>
+                <p style={{ fontFamily:f.ui, fontSize:"13px", fontWeight:300, color:c.textFaint, textAlign:"center" }}>
+                  Nenhuma tarefa ainda. Use o chat para adicionar!
+                </p>
+              </GlassCard>
+            ) : tasks.map((task:any) => (
+              <GlassCard key={task.id} className="px-4 py-3 flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center"
+                  style={{ border:`1.5px solid ${space.color}60` }}>
+                </div>
+                <p style={{ fontFamily:f.ui, fontSize:"13px", fontWeight:400, color:c.text, flex:1 }}>
+                  {task.text}
+                </p>
+              </GlassCard>
+            ))
+          ) : blockData.length === 0 ? (
+            <GlassCard className="p-8 flex flex-col items-center gap-3">
+              <Icon size={20} style={{ color:space.color, strokeWidth:1.5 }} />
               <p style={{ fontFamily:f.ui, fontSize:"13px", fontWeight:300, color:c.textFaint, textAlign:"center" }}>
-                No blocks yet. Tap + to add one.
+                Nenhuma tarefa ainda.
               </p>
             </GlassCard>
           ) : blockData.map((block) => (
