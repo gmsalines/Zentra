@@ -1194,9 +1194,11 @@ function ChatScreen() {
 // ═══════════════════════════════════════════════════════════════════════════════
 function SpacesScreen({ setScreen, openSpace }:
   { setScreen:(s:Screen)=>void; openSpace:(id:string)=>void }) {
-  const { prefs } = usePrefs();
+  const { prefs, setPrefs } = usePrefs();
   const t = useT();
   const [editMode, setEditMode] = useState(false);
+  const [showInput, setShowInput] = useState(false);
+  const [customName, setCustomName] = useState('');
   const activeSpaces = SPACE_DATA.filter(s => prefs.spaces.includes(s.id));
   const spaceLabel = (id:string) => (t.spaces_label as any)[id] ?? id;
   
@@ -1280,14 +1282,69 @@ function SpacesScreen({ setScreen, openSpace }:
         </div>
 
         <div className="px-5 mt-4">
-          <GlassCard className="p-4 flex items-center justify-center gap-2 cursor-pointer"
+          {showInput ? (
+          <GlassCard className="p-4 flex items-center gap-2"
             style={{ border:`1px dashed ${c.silverFaint}` }}>
+            <input
+              autoFocus
+              value={customName}
+              onChange={e => setCustomName(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && customName.trim()) {
+                  const newId = `custom_${Date.now()}`;
+                  SPACE_DATA.push({ id: newId, icon: Plus, color: '#8888ff' });
+                  setPrefs({ ...prefs, spaces: [...prefs.spaces, newId] });
+                  setCustomName('');
+                  setShowInput(false);
+                } else if (e.key === 'Escape') {
+                  setShowInput(false);
+                  setCustomName('');
+                }
+              }}
+              placeholder={t.add_space}
+              style={{
+                flex: 1,
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                fontFamily: f.ui,
+                fontSize: '14px',
+                color: c.text,
+              }}
+            />
+            <button
+              onClick={() => {
+                if (customName.trim()) {
+                  const newId = `custom_${Date.now()}`;
+                  SPACE_DATA.push({ id: newId, icon: Plus, color: '#8888ff' });
+                  setPrefs({ ...prefs, spaces: [...prefs.spaces, newId] });
+                  setCustomName('');
+                  setShowInput(false);
+                }
+              }}
+              style={{
+                background: c.accent,
+                border: 'none',
+                borderRadius: 6,
+                padding: '4px 10px',
+                color: '#fff',
+                fontFamily: f.ui,
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              OK
+            </button>
+          </GlassCard>
+          ) : (
+          <GlassCard className="p-4 flex items-center justify-center gap-2 cursor-pointer"
+            style={{ border:`1px dashed ${c.silverFaint}` }} onClick={() => setShowInput(true)}>
             <Plus size={15} style={{ color:c.silverMid }} />
             <span style={{ fontFamily:f.ui, fontSize:"14px", fontWeight:400, color:c.silverMid }}>
               {t.add_space}
             </span>
           </GlassCard>
-        </div>
+          )}
       </div>
     </div>
   );
