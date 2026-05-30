@@ -241,13 +241,13 @@ const c = {
 };
 
 // ─── Spaces data ──────────────────────────────────────────────────────────────
-const SPACE_DATA = [
-  { id: "work",     icon: Briefcase,  color: "#6E8AC8", hint: "2 meetings today",      pct: 35 },
-  { id: "health",   icon: Heart,      color: "#BF88A8", hint: "3 tasks remaining",     pct: 68 },
-  { id: "finance",  icon: DollarSign, color: "#7BAA8C", hint: "1 bill due soon",       pct: 45 },
-  { id: "home",     icon: HomeIcon,   color: "#BFA070", hint: "Clean kitchen",         pct: 22 },
-  { id: "shopping", icon: ShoppingBag,color: "#9880C4", hint: "4 items listed",        pct: 80 },
-  { id: "books",    icon: BookOpen,   color: "#68ADB8", hint: "The Midnight Library",  pct: 55 },
+const getSpaceData = (lang: string) => [
+getSpaceData(prefs.lang)
+  { id: "health",   icon: Heart,       color: "#BF88A8", hint: lang==='pt'?'3 tarefas pendentes':lang==='es'?'3 tareas pendientes':'3 tasks remaining',     pct: 68 },
+  { id: "finance",  icon: DollarSign,  color: "#7BAA8C", hint: lang==='pt'?'1 conta a vencer':lang==='es'?'1 cuenta por vencer':'1 bill due soon',       pct: 45 },
+  { id: "home",     icon: HomeIcon,    color: "#BFA070", hint: lang==='pt'?'Limpar cozinha':lang==='es'?'Limpiar cocina':'Clean kitchen',         pct: 22 },
+  { id: "shopping", icon: ShoppingBag, color: "#9880C4", hint: lang==='pt'?'4 itens listados':lang==='es'?'4 artículos listados':'4 items listed',        pct: 80 },
+  { id: "books",    icon: BookOpen,    color: "#68ADB8", hint: lang==='pt'?'5 livros em andamento':lang==='es'?'5 libros en progreso':'5 books in progress',  pct: 55 },
 ];
 
 // ─── Glass card style ─────────────────────────────────────────────────────────
@@ -602,7 +602,7 @@ function Onboard2({ onDone }: { onDone:()=>void }) {
   const [sel, setSel] = useState(prefs.spaces);
   const [showInput, setShowInput] = useState(false);
   const [customName, setCustomName] = useState('');
-  const [localSpaces, setLocalSpaces] = useState([...SPACE_DATA]);
+  const [localSpaces, setLocalSpaces] = useState([...getSpaceData(prefs.lang)]);
   const toggle = (id:string) => setSel(p => p.includes(id)?p.filter(x=>x!==id):[...p,id]);
 
   const finish = () => {
@@ -681,7 +681,6 @@ function Onboard2({ onDone }: { onDone:()=>void }) {
                       if (e.key === 'Enter' && customName.trim()) {
                         const id = customName.trim().toLowerCase().replace(/\s+/g, '-');
                         const newSpace = { id, icon: Star, color: '#9880C4', hint: 'Espaço personalizado', pct: 0 };
-                        SPACE_DATA.push({ id, icon: Star, color: '#9880C4', hint: 'Espaço personalizado', pct: 0 });
                         (SPACE_COLOR as any)[id] = '#9880C4';
                         setLocalSpaces(prev => [...prev, newSpace]);
                         setSel(prev => [...prev, id]);
@@ -699,7 +698,7 @@ function Onboard2({ onDone }: { onDone:()=>void }) {
                       if (customName.trim()) {
                         const id = customName.trim().toLowerCase().replace(/\s+/g, '-');
                         const newSpace = { id, icon: Star, color: '#9880C4', hint: 'Espaço personalizado', pct: 0 };
-                        SPACE_DATA.push({ id, icon: Star, color: '#9880C4', hint: 'Espaço personalizado', pct: 0 });
+                        
                         (SPACE_COLOR as any)[id] = '#9880C4';
                         setLocalSpaces(prev => [...prev, newSpace]);
                         setSel(prev => [...prev, id]);
@@ -752,6 +751,7 @@ function HomeScreen({ setScreen }: { setScreen:(s:Screen)=>void }) {
   const [loading, setLoading] = useState(true);
   const hour = new Date().getHours();
 
+    const { prefs } = usePrefs();
   const todayISO = new Date().toISOString().slice(0,10);
 
   useEffect(() => {
@@ -900,7 +900,7 @@ function HomeScreen({ setScreen }: { setScreen:(s:Screen)=>void }) {
             <div className="flex gap-3 pl-5 pr-5 overflow-x-auto" style={{ scrollbarWidth:"none" }}>
               {upcomingTasks.map(item => {
                 const col = spaceColor(item.cat);
-                const spaceInfo = SPACE_DATA.find(s => s.id === item.cat);
+                const spaceInfo = getSpaceData(prefs.lang).find(s => s.id === item.cat);
                 return (
                   <GlassCard key={item.id} className="flex-shrink-0 p-4"
                     style={{ width:170, border:`1px solid ${col}1A` }}>
@@ -1199,7 +1199,7 @@ function SpacesScreen({ setScreen, openSpace }:
   const [editMode, setEditMode] = useState(false);
   const [showInput, setShowInput] = useState(false);
   const [customName, setCustomName] = useState('');
-  const activeSpaces = SPACE_DATA.filter(s => prefs.spaces.includes(s.id));
+  const activeSpaces = getSpaceData(prefs.lang).filter(s => prefs.spaces.includes(s.id));
   const spaceLabel = (id:string) => (t.spaces_label as any)[id] ?? id;
   
 
@@ -1292,7 +1292,7 @@ function SpacesScreen({ setScreen, openSpace }:
               onKeyDown={e => {
                 if (e.key === 'Enter' && customName.trim()) {
                   const newId = `custom_${Date.now()}`;
-                  SPACE_DATA.push({ id: newId, icon: Plus, color: '#8888ff' });
+                  getSpaceData(prefs.lang).push({ id: newId, icon: Plus, color: '#8888ff' });
                   setPrefs({ ...prefs, spaces: [...prefs.spaces, newId] });
                   setCustomName('');
                   setShowInput(false);
@@ -1316,7 +1316,7 @@ function SpacesScreen({ setScreen, openSpace }:
               onClick={() => {
                 if (customName.trim()) {
                   const newId = `custom_${Date.now()}`;
-                  SPACE_DATA.push({ id: newId, icon: Plus, color: '#8888ff' });
+                  getSpaceData(prefs.lang).push({ id: newId, icon: Plus, color: '#8888ff' });
                   setPrefs({ ...prefs, spaces: [...prefs.spaces, newId] });
                   setCustomName('');
                   setShowInput(false);
@@ -1396,11 +1396,12 @@ function BlockWrapper({ title, color, children }: { title:string; color:string; 
 
 function SpaceDetailScreen({ spaceId, goBack }: { spaceId:string; goBack:()=>void }) {
   const t = useT();
-  const space = SPACE_DATA.find(s=>s.id===spaceId)!;
+    const { prefs } = usePrefs();
+  const space = getSpaceData(prefs.lang).find(s=>s.id===spaceId)!;
   const [blockData, setBlockData] = useState<SpaceBlock[]>(SPACE_BLOCKS[spaceId] ?? []);
   const [liveLoaded, setLiveLoaded] = useState(false);
   const [tasks, setTasks] = useState<any[]>([]);
-  const SPACE_TO_CAT: Record<string,string> = { shopping:"compras", work:"brinta", home:"casa", books:"estudo", personal:"pessoal" };
+    nst SPACE_TO_CAT: Record<string,string> = { shopping:"compras", work:"brinta", home:"casa", books:"estudo", personal:"pessoal" };
   const spaceLabel = (id:string) => (t.spaces_label as any)[id] ?? id;
   
 
