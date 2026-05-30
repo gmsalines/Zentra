@@ -1347,6 +1347,7 @@ function SpacesScreen({ setScreen, openSpace }:
           )}
       </div>
     </div>
+      </div>
   );
 }
 
