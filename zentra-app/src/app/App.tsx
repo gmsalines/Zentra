@@ -610,8 +610,7 @@ function Onboard2({ onDone }: { onDone:()=>void }) {
   };
 
   const spaceLabel = (id:string) => (t.spaces_label as any)[id] ?? id;
-  const SPACE_TO_CAT: Record<string,string> = { shopping:"compras", work:"brinta", home:"casa", books:"estudo", personal:"pessoal" };
-  const [tasks, setTasks] = useState<any[]>([]);
+  
 
   return (
     <div className="relative h-full flex flex-col overflow-hidden" style={{ background:c.bg }}>
@@ -732,8 +731,7 @@ function HomeScreen({ setScreen }: { setScreen:(s:Screen)=>void }) {
 
   const spaceColor = (cat: string) => SPACE_COLOR[cat] ?? c.silverMid;
   const spaceLabel = (id:string) => (t.spaces_label as any)[id] ?? id;
-  const SPACE_TO_CAT: Record<string,string> = { shopping:"compras", work:"brinta", home:"casa", books:"estudo", personal:"pessoal" };
-  const [tasks, setTasks] = useState<any[]>([]);
+  
 
   const todayTasks = tasks.filter(r => r.due === todayISO || !r.due);
   const upcomingTasks = tasks.filter(r => r.due && r.due > todayISO).slice(0, 4);
@@ -1147,8 +1145,7 @@ function SpacesScreen({ setScreen, openSpace }:
   const [editMode, setEditMode] = useState(false);
   const activeSpaces = SPACE_DATA.filter(s => prefs.spaces.includes(s.id));
   const spaceLabel = (id:string) => (t.spaces_label as any)[id] ?? id;
-  const SPACE_TO_CAT: Record<string,string> = { shopping:"compras", work:"brinta", home:"casa", books:"estudo", personal:"pessoal" };
-  const [tasks, setTasks] = useState<any[]>([]);
+  
 
   return (
     <div className="relative h-full flex flex-col" style={{ background:c.bg }}>
@@ -1290,14 +1287,23 @@ function SpaceDetailScreen({ spaceId, goBack }: { spaceId:string; goBack:()=>voi
   const space = SPACE_DATA.find(s=>s.id===spaceId)!;
   const [blockData, setBlockData] = useState<SpaceBlock[]>(SPACE_BLOCKS[spaceId] ?? []);
   const [liveLoaded, setLiveLoaded] = useState(false);
-  const spaceLabel = (id:string) => (t.spaces_label as any)[id] ?? id;
-  const SPACE_TO_CAT: Record<string,string> = { shopping:"compras", work:"brinta", home:"casa", books:"estudo", personal:"pessoal" };
   const [tasks, setTasks] = useState<any[]>([]);
+  const SPACE_TO_CAT: Record<string,string> = { shopping:"compras", work:"brinta", home:"casa", books:"estudo", personal:"pessoal" };
+  const spaceLabel = (id:string) => (t.spaces_label as any)[id] ?? id;
+  
 
   // Load real Supabase data for health + finance spaces
   useEffect(() => {
     if (liveLoaded) return;
     const today = new Date().toISOString().slice(0,10);
+
+    const cat = SPACE_TO_CAT[spaceId];
+    if (cat) {
+      sbGet("tasks", `cat=eq.${cat}&done=eq.false&order=prio.asc&limit=20`)
+        .then(rows => { setTasks(rows); setLiveLoaded(true); })
+        .catch(() => setLiveLoaded(true));
+      return;
+    }
 
     if (spaceId === "health") {
       Promise.all([
@@ -1645,8 +1651,7 @@ function HistoryScreen() {
   });
 
   const spaceLabel = (id:string) => (t.spaces_label as any)[id] ?? id;
-  const SPACE_TO_CAT: Record<string,string> = { shopping:"compras", work:"brinta", home:"casa", books:"estudo", personal:"pessoal" };
-  const [tasks, setTasks] = useState<any[]>([]);
+  
 
   return (
     <div className="relative h-full flex flex-col" style={{ background:c.bg }}>
