@@ -600,6 +600,9 @@ function Onboard2({ onDone }: { onDone:()=>void }) {
   const { prefs, setPrefs } = usePrefs();
   const t = useT();
   const [sel, setSel] = useState(prefs.spaces);
+  const [showInput, setShowInput] = useState(false);
+  const [customName, setCustomName] = useState('');
+  const [localSpaces, setLocalSpaces] = useState([...SPACE_DATA]);
   const toggle = (id:string) => setSel(p => p.includes(id)?p.filter(x=>x!==id):[...p,id]);
 
   const finish = () => {
@@ -633,7 +636,7 @@ function Onboard2({ onDone }: { onDone:()=>void }) {
           </motion.div>
 
           <div className="px-5 grid grid-cols-3 gap-3 mb-5">
-            {SPACE_DATA.map((s,i) => {
+            {localSpaces.map((s,i) => {
               const Icon = s.icon; const on = sel.includes(s.id);
               return (
                 <motion.div key={s.id} initial={{ opacity:0, y:18 }} animate={{ opacity:1, y:0 }}
@@ -664,14 +667,55 @@ function Onboard2({ onDone }: { onDone:()=>void }) {
           </div>
 
           <div className="px-5 mb-7">
-            <GlassCard className="px-4 py-3 flex items-center gap-3 cursor-pointer">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ border:`1px dashed ${c.silverFaint}` }}>
-                <Plus size={14} style={{ color:c.silverFaint }} />
-              </div>
-              <span style={{ fontFamily:f.ui, fontSize:"13px", fontWeight:300, color:c.textFaint }}>
-                {t.spaces_add}
-              </span>
+            <GlassCard
+              className="px-4 py-3 flex flex-col gap-2 cursor-pointer"
+              onClick={() => setShowInput(true)}
+            >
+              {showInput ? (
+                <div className="flex gap-2 items-center">
+                  <input
+                    autoFocus
+                    value={customName}
+                    onChange={e => setCustomName(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && customName.trim()) {
+                        const id = customName.trim().toLowerCase().replace(/\s+/g, '-');
+                        const newSpace = { id, icon: Plus, color: '#9880C4', hint: '', pct: 0 };
+                        setLocalSpaces(prev => [...prev, newSpace]);
+                        setSel(prev => [...prev, id]);
+                        setCustomName('');
+                        setShowInput(false);
+                      }
+                      if (e.key === 'Escape') { setShowInput(false); setCustomName(''); }
+                    }}
+                    placeholder={t.spaces_add}
+                    style={{ fontFamily:f.ui, fontSize:"13px", color:c.text, background:"transparent", outline:"none", flex:1 }}
+                  />
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      if (customName.trim()) {
+                        const id = customName.trim().toLowerCase().replace(/\s+/g, '-');
+                        const newSpace = { id, icon: Plus, color: '#9880C4', hint: '', pct: 0 };
+                        setLocalSpaces(prev => [...prev, newSpace]);
+                        setSel(prev => [...prev, id]);
+                        setCustomName('');
+                        setShowInput(false);
+                      }
+                    }}
+                    style={{ fontFamily:f.ui, fontSize:"12px", color:'#9880C4' }}
+                  >OK</button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-center">
+                    <Plus size={14} style={{ color:c.silverFaint }} />
+                  </div>
+                  <span style={{ fontFamily:f.ui, fontSize:"13px", fontWeight:300, color:c.textFaint }}>
+                    {t.spaces_add}
+                  </span>
+                </>
+              )}
             </GlassCard>
           </div>
 
@@ -953,7 +997,9 @@ const CHAT_CHIPS = ["academia feita","anotar compra","quanto gastei esse mês","
 function ChatScreen() {
   const t = useT();
   const { prefs } = usePrefs();
-  const [msgs, setMsgs] = useState<ChatMsg[]>([]);
+  const [msgs, setMsgs] = useState<ChatMsg[]>(() => {
+    try { return JSON.parse(localStorage.getItem('zentra-chat') || '[]'); } catch { return []; }
+  });
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -1023,6 +1069,10 @@ function ChatScreen() {
       setThinking(false);
     }
   };
+
+  useEffect(() => {
+    localStorage.setItem('zentra-chat', JSON.stringify(msgs));
+  }, [msgs]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior:"smooth" }); }, [msgs,thinking]);
 
