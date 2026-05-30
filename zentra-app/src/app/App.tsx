@@ -9,7 +9,7 @@ import {
   Pill, RefreshCw, ChevronRight, Dumbbell, Droplets, Check, Flame,
   Activity, Sparkles, User, Moon, Sun, MoreHorizontal, Edit2, GripVertical,
   SlidersHorizontal, CheckCircle2, ArrowRight, Minus, Globe, Palette,
-} from "lucide-react";
+, Star} from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Screen = "onboard1" | "onboard_style" | "onboard2" | "home" | "chat" | "spaces" | "space_detail" | "history";
@@ -680,7 +680,9 @@ function Onboard2({ onDone }: { onDone:()=>void }) {
                     onKeyDown={e => {
                       if (e.key === 'Enter' && customName.trim()) {
                         const id = customName.trim().toLowerCase().replace(/\s+/g, '-');
-                        const newSpace = { id, icon: Plus, color: '#9880C4', hint: '', pct: 0 };
+                        const newSpace = { id, icon: Star, color: '#9880C4', hint: 'Espaço personalizado', pct: 0 };
+                        SPACE_DATA.push({ id, icon: Star, color: '#9880C4', hint: 'Espaço personalizado', pct: 0 });
+                        (SPACE_COLOR as any)[id] = '#9880C4';
                         setLocalSpaces(prev => [...prev, newSpace]);
                         setSel(prev => [...prev, id]);
                         setCustomName('');
@@ -696,7 +698,9 @@ function Onboard2({ onDone }: { onDone:()=>void }) {
                       e.stopPropagation();
                       if (customName.trim()) {
                         const id = customName.trim().toLowerCase().replace(/\s+/g, '-');
-                        const newSpace = { id, icon: Plus, color: '#9880C4', hint: '', pct: 0 };
+                        const newSpace = { id, icon: Star, color: '#9880C4', hint: 'Espaço personalizado', pct: 0 };
+                        SPACE_DATA.push({ id, icon: Star, color: '#9880C4', hint: 'Espaço personalizado', pct: 0 });
+                        (SPACE_COLOR as any)[id] = '#9880C4';
                         setLocalSpaces(prev => [...prev, newSpace]);
                         setSel(prev => [...prev, id]);
                         setCustomName('');
