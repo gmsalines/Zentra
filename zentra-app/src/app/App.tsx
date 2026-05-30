@@ -9,7 +9,7 @@ import {
   Pill, RefreshCw, ChevronRight, Dumbbell, Droplets, Check, Flame,
   Activity, Sparkles, User, Moon, Sun, MoreHorizontal, Edit2, GripVertical,
   SlidersHorizontal, CheckCircle2, ArrowRight, Minus, Globe, Palette,
-  Star} from "lucide-react";
+Mic,   Star} from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Screen = "onboard1" | "onboard_style" | "onboard2" | "home" | "chat" | "spaces" | "space_detail" | "history";
@@ -1007,6 +1007,27 @@ function ChatScreen() {
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const [listening, setListening] = useState(false);
+  const srRef = useRef<any>(null);
+  const hasSR = !!(window.SpeechRecognition || (window as any).webkitSpeechRecognition);
+  const langLocale = prefs.lang==='pt'?'pt-BR':prefs.lang==='es'?'es-ES':'en-US';
+  const startListening = () => {
+    if (!hasSR || listening) return;
+    const SR = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const rec = new SR();
+    srRef.current = rec;
+    rec.lang = langLocale;
+    rec.interimResults = false;
+    rec.onstart = () => setListening(true);
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    rec.onresult = (e: any) => {
+      const transcript = e.results[0][0].transcript;
+      setInput(transcript);
+      setTimeout(() => send(transcript), 100);
+    };
+    rec.start();
+  };
 
   const executeAction = async (type: string, data: any) => {
     const today = new Date().toISOString().slice(0,10);
@@ -1175,6 +1196,15 @@ function ChatScreen() {
               onKeyDown={e=>e.key==="Enter"&&send()} placeholder={t.chat_placeholder}
               className="flex-1 bg-transparent outline-none"
               style={{ fontFamily:f.ui, fontSize:"14px", fontWeight:300, color:c.text }} />
+            {hasSR && (
+              <motion.button onClick={startListening} className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background:listening?"rgba(239,68,68,0.15)":"var(--c-glass-bg)",
+                        border:`1px solid ${listening?"rgba(239,68,68,0.5)":"var(--c-glass-border)"}`,
+                        transition:"all 0.2s" }}
+                whileTap={{ scale:0.87 }}>
+                <Mic size={14} style={{ color:listening?"rgb(239,68,68)":c.textFaint, strokeWidth:1.8 }} />
+              </motion.button>
+              )}
             <motion.button onClick={()=>send()} className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background:input.trim()?"var(--c-glass-bg)":"transparent",
                 border:`1px solid ${input.trim()?"var(--c-glass-border)":"transparent"}`,
