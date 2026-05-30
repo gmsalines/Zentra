@@ -1353,7 +1353,7 @@ function SpacesScreen({ setScreen, openSpace }:
 // ═══════════════════════════════════════════════════════════════════════════════
 // SCREEN 7 — Space Detail
 // ═══════════════════════════════════════════════════════════════════════════════
-type SpaceBlock = { id:string; title:string; type:"goal"|"list"|"reminders"|"routine"|"tracker"; data:any };
+type SpaceBlock = { id:string; title:string; type:"goal"|"list"|"reminders"|"routine"|"tracker"; data:any }
 const SPACE_BLOCKS: Record<string, SpaceBlock[]> = {
   health: [
     { id:"g1", title:"Daily Steps", type:"goal",
