@@ -1,17 +1,1128 @@
 <!DOCTYPE html>
-<html lang="pt">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Zentra — Your missing wand</title>
-    <meta name="description" content="Zentra — hub de produtividade pessoal. Tarefas, finanças, saúde e IA." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <style>html, body { height: 100%; margin: 0; background: #020408; } #root { height: 100%; }</style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Zentra">
+<meta name="theme-color" content="#0A0E1A">
+<title>Zentra — Your missing wand.</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--bg:#0A0E1A;--surface:#060A12;--surface2:#04080F;--gold:#6A8FD4;--gold2:#A8C4F0;--cream:#E8EEF8;--cream2:#A0B4D8;--moss:#7AB8E8;--terra:#E87AB8;--red:#E87070;--border:#141C2E;--border2:#1E2A40;--text:#E8EEF8;--text2:#7A9CC8;--text3:#3A5A8A;--r:14px;--rs:8px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);font-size:15px;min-height:100vh;}
+#app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;}
+.screen{display:none;padding:1rem 1rem 5.5rem;min-height:100vh;}.screen.active{display:block;}
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--surface2);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+.nb{flex:1;padding:10px 2px 8px;background:transparent;border:none;cursor:pointer;font-size:9px;color:var(--text3);display:flex;flex-direction:column;align-items:center;gap:4px;font-family:inherit;letter-spacing:.02em;transition:color .15s;}
+
+.nb.on{color:var(--gold);}
+.topbar{padding:.75rem 0 1.25rem;}
+.tdate{font-size:12px;color:var(--text2);margin-bottom:2px;}
+.ttitle{font-family:Georgia,serif;font-size:22px;font-weight:700;color:var(--cream);}
+.trow{display:flex;justify-content:space-between;align-items:flex-end;}
+.avatar{display:flex;align-items:center;flex-shrink:0;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;}
+.card.urgent{border-left:3px solid var(--red);}.card.warn{border-left:3px solid var(--gold);}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.25rem;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:.85rem 1rem;}
+.sn{font-size:26px;font-weight:600;line-height:1;font-family:Georgia,serif;}
+.sl-label{font-size:11px;color:var(--text2);margin-top:4px;}
+.sl{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin:1.25rem 0 .6rem;}
+.sl:first-child{margin-top:0;}
+.tr{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;}
+.tr.done{opacity:.4;}.tr.done .tx{text-decoration:line-through;}
+.tr.urgent{border-left:3px solid var(--red);}.tr.warn{border-left:3px solid var(--gold);}
+.cb{width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);background:transparent;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .15s;}
+.cb.on{background:var(--moss);border-color:var(--moss);}
+.tx{flex:1;font-size:14px;line-height:1.4;color:var(--cream);}
+.txm{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;align-items:center;}
+.xb{background:transparent;border:none;cursor:pointer;color:var(--text3);font-size:20px;line-height:1;padding:0;flex-shrink:0;}
+.badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;}
+.b0{background:#080E1A;color:var(--gold);border:.5px solid #4A3A20;}
+.b1{background:#1A2228;color:#7AB8D4;border:.5px solid #2A4A5A;}
+.b2{background:#1E2A1A;color:var(--moss);border:.5px solid #3A4A28;}
+.b3{background:#2A1A18;color:var(--terra);border:.5px solid #4A2A20;}
+.utag{font-size:11px;font-weight:600;}
+.ured{color:var(--red);}.uamb{color:var(--gold);}
+.fr{display:flex;gap:6px;margin-bottom:1rem;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+.fr::-webkit-scrollbar{display:none;}
+.fb{padding:5px 12px;border:1px solid var(--border2);border-radius:20px;background:transparent;cursor:pointer;font-size:13px;color:var(--text2);white-space:nowrap;font-family:inherit;transition:all .15s;}
+.fb.on{background:var(--gold);color:var(--surface2);border-color:var(--gold);font-weight:500;}
+.ab{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-top:1rem;}
+.ab input,.ab select,.ab textarea{width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:var(--rs);background:var(--surface2);color:var(--cream);margin-bottom:8px;font-family:inherit;outline:none;}
+.ab input:focus,.ab select:focus{border-color:var(--gold);}
+.ab input::placeholder{color:var(--text3);}
+.ab .rr{display:flex;gap:8px;margin-bottom:8px;}
+.ab .rr input,.ab .rr select{margin:0;}
+.ab select option{background:var(--surface2);}
+.btn{width:100%;padding:10px;font-size:14px;border:1.5px solid var(--gold);border-radius:var(--rs);background:transparent;cursor:pointer;color:var(--gold);font-weight:600;font-family:inherit;margin-top:4px;transition:background .15s;}
+.btn:hover{background:#3A2A10;}
+.btn.pri{background:var(--gold);color:var(--surface2);}.btn.pri:hover{background:var(--gold2);}
+.btn.dan{border-color:var(--red);color:var(--red);}
+.t2{padding:5px 14px;border:1px solid var(--border2);border-radius:20px;background:transparent;cursor:pointer;font-size:13px;color:var(--text2);font-family:inherit;transition:all .15s;}
+.t2.on{background:var(--cream);color:var(--surface2);border-color:var(--cream);font-weight:500;}
+.sh{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--r);margin-bottom:1rem;}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--text3);font-size:14px;}
+.ss{display:none;}.ss.active{display:block;}
+.back{display:flex;align-items:center;gap:6px;background:transparent;border:none;cursor:pointer;color:var(--text2);font-size:13px;font-family:inherit;padding:0;margin-bottom:1rem;}
+.pbar{background:var(--border2);border-radius:4px;height:6px;overflow:hidden;margin-top:4px;}
+.pfill{height:100%;border-radius:4px;transition:width .3s;}
+.hgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem;}
+.hcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 12px;cursor:pointer;text-align:center;transition:border-color .15s;}
+.hcard:hover{border-color:var(--gold);}
+.hci{font-size:28px;display:block;margin-bottom:6px;}
+.hcn{font-size:13px;font-weight:500;color:var(--cream);}
+.hcv{font-size:12px;color:var(--text2);margin-top:3px;}
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end;justify-content:center;}
+.mo.active{display:flex;}
+.moc{background:var(--surface);border-radius:var(--r) var(--r) 0 0;padding:1.25rem 1rem 2rem;width:100%;max-width:480px;}
+.banner{background:#3A1A18;border:1px solid var(--red);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;gap:10px;}
+.hr-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:6px;}
+.hr-cb{width:22px;height:22px;border-radius:6px;border:2px solid var(--border2);background:transparent;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.hr-cb.on{background:var(--moss);border-color:var(--moss);color:white;font-size:12px;}
+.amt{font-size:15px;font-weight:600;color:var(--gold);}
+.amtc{font-size:11px;color:var(--text3);}
+.dt{font-size:12px;color:var(--text3);}
+.ptime{font-family:Georgia,serif;font-size:64px;font-weight:700;color:var(--cream);line-height:1;text-align:center;}
+.plabel{font-size:13px;color:var(--text2);text-align:center;margin-top:.5rem;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div id="app">
+<!-- HOME -->
+<div id="s-home" class="screen active">
+  <div class="topbar">
+    <div class="trow">
+      <div><div class="tdate" id="hdate"></div><div class="ttitle" id="hgreet">Gabi</div></div>
+      <svg width="110" height="32" viewBox="0 0 220 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Clock left arc -->
+  <path d="M22,8 A24,24 0 0,0 22,56" stroke="#6A8FD4" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
+  <path d="M22,56 A24,24 0 0,0 46,32" stroke="#6A8FD4" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="5 4" opacity="0.35"/>
+  <path d="M46,32 A24,24 0 0,0 22,8" stroke="#6A8FD4" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 6" opacity="0.13"/>
+  <!-- Ticks -->
+  <line x1="22" y1="9" x2="22" y2="14" stroke="#A8C4F0" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="-2" y1="32" x2="3" y2="32" stroke="#A8C4F0" stroke-width="1.3" stroke-linecap="round" opacity="0.7"/>
+  <line x1="22" y1="55" x2="22" y2="50" stroke="#A8C4F0" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+  <!-- Hands midnight -->
+  <line x1="22" y1="32" x2="22" y2="11" stroke="#E8EEF8" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="22" y1="32" x2="22" y2="20" stroke="#E8EEF8" stroke-width="2.8" stroke-linecap="round"/>
+  <!-- Center -->
+  <circle cx="22" cy="32" r="2.5" fill="#A8C4F0"/>
+  <circle cx="22" cy="32" r="1.2" fill="#0A0E1A"/>
+  <!-- Spark -->
+  <circle cx="22" cy="9" r="2.2" fill="#E8EEF8" opacity="0.95"/>
+  <circle cx="22" cy="9" r="4.5" fill="#E8EEF8" opacity="0.1"/>
+  <line x1="22" y1="2" x2="22" y2="-1" stroke="#E8EEF8" stroke-width="0.9" stroke-linecap="round" opacity="0.8"/>
+  <line x1="28" y1="4" x2="31" y2="1" stroke="#E8EEF8" stroke-width="0.9" stroke-linecap="round" opacity="0.7"/>
+  <line x1="16" y1="4" x2="13" y2="1" stroke="#E8EEF8" stroke-width="0.9" stroke-linecap="round" opacity="0.7"/>
+  <!-- Particles -->
+  <circle cx="50" cy="14" r="1.8" fill="#A8C4F0" opacity="0.6"/>
+  <circle cx="64" cy="9" r="1.3" fill="#6A8FD4" opacity="0.5"/>
+  <circle cx="76" cy="18" r="1.5" fill="#A8C4F0" opacity="0.4"/>
+  <circle cx="88" cy="10" r="1.1" fill="#E8EEF8" opacity="0.35"/>
+  <!-- ZENTRA text -->
+  <text x="62" y="40" font-family="Georgia,serif" font-size="22px" letter-spacing="4px" fill="#E8EEF8" font-weight="400" opacity="0.92">ZENTRA</text>
+</svg>
+    </div>
+  </div>
+  <div id="hbanner" style="display:none" class="banner"><span style="font-size:18px">⚠️</span><span style="font-size:13px;color:#F0A090;flex:1" id="hbannertext"></span></div>
+  <div class="sg">
+    <div class="stat"><div class="sn" id="su" style="color:var(--red)">–</div><div class="sl-label">Urgentes</div></div>
+    <div class="stat"><div class="sn" id="sp">–</div><div class="sl-label">Pendentes</div></div>
+    <div class="stat"><div class="sn" id="sb2" style="color:var(--gold)">–</div><div class="sl-label">Contas vencer</div></div>
+    <div class="stat"><div class="sn" id="sm" style="color:var(--moss)">–</div><div class="sl-label">Gastos BRL</div></div>
+  </div>
+  <div class="sl">Hoje</div><div id="htoday"><div class="empty" style="padding:1rem">Carregando...</div></div>
+  <div class="sl">Próximos 3 dias</div><div id="hup"></div>
+</div>
+
+<!-- TRABALHO -->
+<div id="s-work" class="screen">
+  <div class="sh" style="background:#080E18">
+    <span style="font-size:20px">🎠</span>
+    <span style="font-family:Georgia,serif;font-size:17px;font-weight:700;color:var(--gold)">Trabalho</span>
+  </div>
+  <div id="wk-main" class="ss active">
+    <div class="fr">
+      <button class="fb on" onclick="fWork(this,'all')">Todas</button>
+      <button class="fb" onclick="fWork(this,'brinta')">Produto</button>
+      <button class="fb" onclick="fWork(this,'cliente')">Clientes</button>
+      <button class="fb" onclick="fWork(this,'hist')">Histórico</button>
+      <button class="fb" onclick="wkSub('pomo')">🍅 Foco</button>
+      <button class="fb" onclick="wkSub('horas')">⏱ Horas</button>
+    </div>
+    <div id="wklist"></div>
+    <div id="wkclear" style="display:none;margin-top:.5rem">
+      <button class="btn dan" onclick="clearWkDone()">Limpar concluídas</button>
+    </div>
+    <div class="ab">
+      <input id="wt" placeholder="Nova tarefa...">
+      <div class="rr">
+        <select id="wcat"><option value="brinta">Produto</option><option value="cliente">Cliente</option></select>
+        <select id="wprio"><option value="alta">Alta</option><option value="media" selected>Média</option><option value="baixa">Baixa</option></select>
+      </div>
+      <input id="wdue" type="date">
+      <input id="wnotes" placeholder="País / notas (opcional)">
+      <button class="btn" onclick="addWk()">+ Adicionar</button>
+    </div>
+  </div>
+  <div id="wk-pomo" class="ss">
+    <div style="padding:1.5rem 0;text-align:center">
+      <div class="ptime" id="ptime">25:00</div>
+      <div class="plabel" id="plabel">🍅 Foco</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:.5rem">Ciclos hoje: <span id="pcycles">0</span></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:1rem">
+      <button class="btn" style="max-width:140px" id="pbtn" onclick="togglePomo()">Iniciar</button>
+      <button class="btn" style="max-width:140px" onclick="resetPomo()">Resetar</button>
+    </div>
+    <div class="fr">
+      <button class="fb on" onclick="setPomo(25,5,this)">25/5</button>
+      <button class="fb" onclick="setPomo(50,10,this)">50/10</button>
+      <button class="fb" onclick="setPomo(90,15,this)">90/15</button>
+    </div>
+    <button class="back" onclick="wkSub('main')">← Voltar</button>
+  </div>
+  <div id="wk-horas" class="ss">
+    <div id="horaslist"></div>
+    <div class="ab">
+      <div class="rr">
+        <input id="hhrs" type="number" placeholder="Horas" step="0.5" style="flex:1">
+        <input id="hproj" placeholder="Projeto" style="flex:1">
+      </div>
+      <input id="hdesc" placeholder="Descrição (opcional)">
+      <input id="hdate2" type="date">
+      <button class="btn" onclick="addHoras()">+ Registrar horas</button>
+    </div>
+    <button class="back" onclick="wkSub('main')">← Voltar</button>
+  </div>
+</div>
+
+
+<!-- PESSOAL -->
+<div id="s-pessoal" class="screen">
+  <div class="sh" style="background:#0A0E18">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.3" stroke-linecap="round"><path d="M3,18 Q8,21 14,20 Q20,19 21,15 Q19,12 14,12 Q9,12 8,15 Q5,18 3,18Z"/><path d="M14,12 Q16,6 13,4 Q10,2 8,6 Q7,9 8,15"/></svg>
+    <span style="font-family:Georgia,serif;font-size:17px;font-weight:700;color:var(--gold)">Pessoal</span>
+  </div>
+  <div id="ps-main" class="ss active">
+    <div class="fr">
+      <button class="fb on" onclick="fPes(this,'all')">Todas</button>
+      <button class="fb" onclick="fPes(this,'cliente')">Clientes</button>
+      <button class="fb" onclick="fPes(this,'pessoal')">Vida</button>
+      <button class="fb" onclick="fPes(this,'estudo')">Estudo</button>
+      <button class="fb" onclick="fPes(this,'hist')">Histórico</button>
+      <button class="fb" onclick="psSub('metas')">Metas</button>
+    </div>
+    <div id="pslist"></div>
+    <div class="ab">
+      <input id="pt" placeholder="Nova tarefa...">
+      <div class="rr">
+        <select id="pcat"><option value="pessoal">Vida</option><option value="estudo">Estudo</option></select>
+        <select id="pprio"><option value="alta">Alta</option><option value="media" selected>Média</option><option value="baixa">Baixa</option></select>
+      </div>
+      <input id="pdue" type="date">
+      <button class="btn" onclick="addPs()">+ Adicionar</button>
+    </div>
+  </div>
+  <div id="ps-metas" class="ss">
+    <button class="back" onclick="psSub('main')">← Voltar</button>
+    <div class="sl">Metas</div>
+    <div id="metaslist"></div>
+    <div class="ab">
+      <input id="metainput" placeholder="Descrição da meta...">
+      <div class="rr">
+        <select id="metatipo"><option value="diaria">Diária</option><option value="semanal">Semanal</option><option value="mensal">Mensal</option><option value="anual">Anual</option><option value="unica">Única</option></select>
+        <input id="metadue" type="date" style="flex:1">
+      </div>
+      <button class="btn" onclick="addMeta()">+ Adicionar meta</button>
+    </div>
+  </div>
+</div>
+
+<!-- FINANÇAS -->
+<div id="s-fin" class="screen">
+  <div class="sh" style="background:#080C18">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.3" stroke-linecap="round"><path d="M8,9 Q8,5 12,5 Q16,5 16,9"/><rect x="4" y="9" width="16" height="12" rx="3"/><circle cx="12" cy="15" r="2.5"/></svg>
+    <span style="font-family:Georgia,serif;font-size:17px;font-weight:700;color:var(--gold2)">Finanças</span>
+  </div>
+  <div class="fr">
+    <button class="fb on" data-tab="contas" onclick="showFin(this,'contas')">Contas</button>
+    <button class="fb" data-tab="gastos" onclick="showFin(this,'gastos')">Gastos</button>
+    <button class="fb" data-tab="orc" onclick="showFin(this,'orc')">Orçamento</button>
+    <button class="fb" data-tab="comp" onclick="showFin(this,'comp')">Compras</button>
+    <button class="fb" data-tab="div" onclick="showFin(this,'div')">Dívidas</button>
+    <button class="fb" data-tab="graf" onclick="showFin(this,'graf')">📊</button>
+  </div>
+  <div id="fin-contas">
+    <div id="billslist"></div>
+    <div class="ab">
+      <input id="bn" placeholder="Nome da conta">
+      <div class="rr"><input id="bv" type="number" placeholder="Valor" style="flex:1"><select id="bc"><option>BRL</option><option>UYU</option><option>USD</option></select></div>
+      <input id="bd" type="date">
+      <select id="bb"><option value="">Banco (opcional)</option><option>Nubank</option><option>Itaú</option><option>Inter</option><option>C6</option><option>Outro</option></select>
+      <select id="bf"><option value="">Forma de pagamento</option><option>Débito automático</option><option>Boleto</option><option>Cartão de crédito</option><option>Pix</option></select>
+      <button class="btn" onclick="addBill()">+ Adicionar conta</button>
+    </div>
+  </div>
+  <div id="fin-gastos" style="display:none">
+    <div id="gsum"></div><div id="glist"></div>
+    <div class="ab">
+      <input id="gd" placeholder="Descrição">
+      <div class="rr"><input id="gv" type="number" placeholder="Valor" style="flex:1"><select id="gc"><option>BRL</option><option>UYU</option><option>USD</option></select></div>
+      <select id="gcat"><option>Alimentação</option><option>Transporte</option><option>Academia</option><option>Saúde</option><option>Lazer</option><option>Estudo</option><option>Casa</option><option>Outro</option></select>
+      <select id="gbanco"><option value="">Banco</option><option>Nubank</option><option>Itaú</option><option>Inter</option><option>C6</option><option>Outro</option></select>
+      <input id="gdate" type="date">
+      <button class="btn" onclick="addGasto()">+ Adicionar gasto</button>
+    </div>
+  </div>
+  <div id="fin-orc" style="display:none">
+    <div id="orclist"></div>
+    <div class="ab">
+      <div class="sl" style="margin:0 0 .5rem">Taxas de câmbio para BRL</div>
+      <div class="rr"><label style="color:var(--text2);font-size:13px">USD</label><input id="tusd" type="number" step="0.01" placeholder="5.70" style="flex:1"><label style="color:var(--text2);font-size:13px">UYU</label><input id="tuyu" type="number" step="0.001" placeholder="0.14" style="flex:1"></div>
+      <button class="btn" onclick="saveTaxas()">Salvar taxas</button>
+      <div class="sl" style="margin:.75rem 0 .5rem">Orçamento</div>
+      <div class="rr"><select id="ocat" style="flex:1"><option>Alimentação</option><option>Transporte</option><option>Academia</option><option>Saúde</option><option>Lazer</option><option>Estudo</option><option>Casa</option><option>Outro</option></select><input id="oval" type="number" placeholder="Limite BRL" style="flex:1"></div>
+      <button class="btn" onclick="addOrc()">+ Definir limite</button>
+    </div>
+  </div>
+  <div id="fin-comp" style="display:none">
+    <div id="compcount" style="font-size:12px;color:var(--text2);padding:.5rem 0"></div>
+    <div id="complist"></div>
+    <div class="ab">
+      <div class="rr"><input id="ci" placeholder="Item" style="flex:1"><input id="cq" type="number" placeholder="Qtd" style="width:60px;min-width:60px"><input id="cp" type="number" placeholder="R$" style="width:70px;min-width:70px"></div>
+      <button class="btn" onclick="addComp()">+ Adicionar</button>
+    </div>
+  </div>
+  <div id="fin-graf" style="display:none">
+    <div class="sl">Gastos por categoria — mês atual</div>
+    <div style="position:relative;height:240px;margin-bottom:1rem"><canvas id="chart-cat"></canvas></div>
+    <div class="sl">Evolução mensal (BRL)</div>
+    <div style="position:relative;height:200px;margin-bottom:1rem"><canvas id="chart-mensal"></canvas></div>
+    <div id="graf-resumo"></div>
+  </div>
+  <div id="fin-div" style="display:none">
+    <div id="divlist"></div>
+    <div class="ab">
+      <input id="dquem" placeholder="Quem deve">
+      <input id="ddesc" placeholder="Descrição (opcional)">
+      <div class="rr"><input id="dval" type="number" placeholder="Valor" style="flex:1"><select id="dcur"><option>BRL</option><option>UYU</option><option>USD</option></select></div>
+      <select id="dbanco"><option value="">Banco de recebimento</option><option>Nubank</option><option>Itaú</option><option>PIX</option><option>Efectivo</option><option>Outro</option></select>
+      <input id="ddate" type="date">
+      <button class="btn" onclick="addDiv()">+ Registrar dívida</button>
+    </div>
+  </div>
+</div>
+
+<!-- SAÚDE -->
+<div id="s-saude" class="screen">
+  <div class="sh" style="background:#080E18">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--moss)" stroke-width="1.3" stroke-linecap="round"><line x1="5" y1="20" x2="14" y2="10"/><polygon points="16,2 17.5,7 22,7 18.5,10 20,15 16,12 12,15 13.5,10 10,7 14.5,7" stroke-width="1.1"/></svg>
+    <span style="font-family:Georgia,serif;font-size:17px;font-weight:700;color:#C8A8FF">Saúde</span>
+  </div>
+  <div id="sd-main" class="ss active">
+    <div class="hgrid">
+    <div class="hcard" onclick="openS('peso')"><span class="hci">⚖️</span><div class="hcn">Peso</div><div class="hcv" id="sv-peso">–</div></div>
+    <div class="hcard" onclick="openS('treino')"><span class="hci">🏋️</span><div class="hcn">Treino</div><div class="hcv" id="sv-treino">–</div></div>
+    <div class="hcard" onclick="openS('alim')"><span class="hci">🥗</span><div class="hcn">Alimentação</div><div class="hcv" id="sv-alim">–</div></div>
+    <div class="hcard" onclick="openS('sono')"><span class="hci">🌙</span><div class="hcn">Sono</div><div class="hcv" id="sv-sono">–</div></div>
+    <div class="hcard" onclick="openS('agua')"><span class="hci">💧</span><div class="hcn">Água</div><div class="hcv" id="sv-agua">0/8</div></div>
+    <div class="hcard" onclick="openS('meds')"><span class="hci">💊</span><div class="hcn">Medicamentos</div><div class="hcv" id="sv-meds">–</div></div>
+    <div class="hcard" onclick="openS('hab')"><span class="hci">✅</span><div class="hcn">Hábitos</div><div class="hcv" id="sv-hab">–</div></div>
+    </div>
+  </div>
+  <div id="sd-peso" class="ss"><button class="back" onclick="closeS()">← Saúde</button>
+    <div class="card" style="text-align:center;padding:1.5rem">
+      <div style="font-family:Georgia,serif;font-size:48px;font-weight:700;color:var(--cream)" id="pdisplay">–</div>
+      <div class="dt">kg</div>
+      <div class="dt" style="margin-top:6px" id="pmeta"></div>
+      <div id="pprogbar" style="display:none;margin-top:.75rem"><div class="pbar"><div class="pfill" id="pprog" style="background:var(--moss);width:0%"></div></div></div>
+    </div>
+    <div id="plist" style="margin-top:1rem"></div>
+    <div class="ab">
+      <div class="rr"><input id="pv" type="number" placeholder="Peso atual (kg)" step="0.1" style="flex:1"><input id="pd" type="date" style="flex:1"></div>
+      <input id="pm" type="number" placeholder="Meta de peso (kg)" step="0.1">
+      <button class="btn" onclick="addPeso()">+ Registrar</button>
+    </div>
+  </div>
+  <div id="sd-treino" class="ss"><button class="back" onclick="closeS()">← Saúde</button>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-family:Georgia,serif;font-size:32px;color:var(--moss)" id="trsem">0</div><div class="dt">esta semana</div></div>
+        <div style="text-align:right"><div style="font-size:20px;font-weight:600;color:var(--cream)" id="tracum">0</div><div class="dt">dias acumulados</div></div>
+      </div>
+      <div style="display:flex;gap:4px;margin-top:1rem" id="trweek"></div>
+    </div>
+    <div id="trlist" style="margin-top:1rem"></div>
+    <div class="ab">
+      <input id="trd" type="date">
+      <div class="rr"><select id="trt"><option value="musculacao">Musculação</option><option value="cardio">Cardio</option><option value="funcional">Funcional</option><option value="outro">Outro</option></select><input id="trmin" type="number" placeholder="Minutos" style="width:100px;min-width:100px"></div>
+      <input id="trcal" type="number" placeholder="Calorias (opcional)">
+      <input id="trmuscle" placeholder="Parte do corpo (ex: pernas, costas, peito...)">
+      <button class="btn" onclick="addTreino()">+ Registrar treino</button>
+    </div>
+    <div class="ab" style="margin-top:.5rem">
+      <div class="sl" style="margin:0 0 .5rem">Dias acumulados</div>
+      <div class="rr">
+        <input id="tracuminput" type="number" placeholder="Ex: 57" style="flex:1">
+        <button class="btn" style="width:80px;margin:0" onclick="saveAcum()">Salvar</button>
+        <button class="btn dan" style="width:80px;margin:0" onclick="zeraSem()">Zerar sem.</button>
+      </div>
+    </div>
+  </div>
+  <div id="sd-alim" class="ss"><button class="back" onclick="closeS()">← Saúde</button>
+    <div class="card">
+      <div style="display:flex;justify-content:space-around;margin-bottom:.75rem">
+        <div style="text-align:center">
+          <div style="font-family:Georgia,serif;font-size:32px;color:var(--cream)" id="akcal">0</div>
+          <div class="dt">kcal — meta: <span id="ametadisp" style="color:var(--gold)">–</span></div>
+          <div class="pbar" style="margin-top:.4rem;width:100px"><div class="pfill" id="aprog" style="background:var(--moss);width:0%"></div></div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:Georgia,serif;font-size:32px;color:var(--terra)" id="aprotdisplay">0</div>
+          <div class="dt">g prot — meta: <span id="aprotmetadisp" style="color:var(--gold)">–</span></div>
+          <div class="pbar" style="margin-top:.4rem;width:100px"><div class="pfill" id="aprotprog" style="background:var(--terra);width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+    <div id="alist" style="margin-top:1rem"></div>
+    <div class="ab">
+      <input id="aref" placeholder="Refeição (café, almoço, jantar...)">
+      <div class="rr"><input id="akcalin" type="number" placeholder="Kcal" style="flex:1"><input id="aprot" type="number" placeholder="Proteína g" style="flex:1"></div>
+      <div class="rr"><input id="ametain" type="number" placeholder="Meta kcal/dia" style="flex:1"><input id="aprotmeta" type="number" placeholder="Meta proteína g/dia" style="flex:1"></div>
+      <button class="btn" onclick="addAlim()">+ Registrar refeição</button>
+    </div>
+  </div>
+  <div id="sd-sono" class="ss"><button class="back" onclick="closeS()">← Saúde</button>
+    <div class="card" style="text-align:center;padding:1.5rem"><div style="font-family:Georgia,serif;font-size:48px;font-weight:700;color:var(--cream)" id="sdisplay">–</div><div class="dt">horas</div><div class="dt" style="margin-top:8px">Média 7 dias: <span id="smedia" style="color:var(--gold)">–</span>h</div></div>
+    <div id="slist" style="margin-top:1rem"></div>
+    <div class="ab"><div class="rr"><input id="sho" type="number" placeholder="Horas dormidas" step="0.5" style="flex:1"><input id="sd2" type="date" style="flex:1"></div><button class="btn" onclick="addSono()">+ Registrar</button></div>
+  </div>
+  <div id="sd-agua" class="ss"><button class="back" onclick="closeS()">← Saúde</button>
+    <div class="card" style="text-align:center;padding:2rem">
+      <div style="font-family:Georgia,serif;font-size:48px;font-weight:700;color:#7AC8E8" id="aguaml">0</div>
+      <div class="dt">ml — meta: <span id="aguametad" style="color:var(--gold)">2000</span> ml</div>
+      <div class="pbar" style="margin-top:1rem"><div class="pfill" id="aguaprog" style="background:#7AC8E8;width:0%"></div></div>
+      <div style="font-size:12px;color:var(--text2);margin-top:.5rem" id="aguacount"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap">
+      <button class="btn pri" style="flex:1" onclick="addAguaMl(250)">+ 250ml</button>
+      <button class="btn pri" style="flex:1" onclick="addAguaMl(350)">+ 350ml</button>
+      <button class="btn pri" style="flex:1" onclick="addAguaMl(500)">+ 500ml</button>
+      <button class="btn" style="flex:1" onclick="addAguaMl(-250)">– 250ml</button>
+    </div>
+    <div class="ab">
+      <div class="rr">
+        <input id="aguacustom" type="number" placeholder="Outro valor (ml)" style="flex:1">
+        <button class="btn" style="width:80px;margin:0" onclick="addAguaMl(parseInt(document.getElementById('aguacustom').value)||0)">+ Add</button>
+      </div>
+      <input id="aguametain" type="number" placeholder="Meta diária (ml, padrão: 2000)">
+      <button class="btn" onclick="saveAguaMeta()">Salvar meta</button>
+    </div>
+  </div>
+  <div id="sd-meds" class="ss"><button class="back" onclick="closeS()">← Saúde</button>
+    <div class="sl">Medicamentos</div><div id="medslist"></div>
+    <div class="ab">
+      <input id="mn" placeholder="Nome (ex: Monjaro)">
+      <div class="rr"><input id="md" placeholder="Dose" style="flex:1"><input id="mp" type="date" style="flex:1"></div>
+      <input id="mf" placeholder="Frequência (ex: semanal, diário)">
+      <button class="btn" onclick="addMed()">+ Adicionar</button>
+    </div>
+  </div>
+</div>
+  <div id="sd-hab" class="ss">
+    <button class="back" onclick="closeS()">← Saúde</button>
+    <div class="sl">Hábitos de hoje</div>
+    <div id="hablist"></div>
+    <div class="ab">
+      <input id="habt" placeholder="Novo hábito..." onkeydown="if(event.key==='Enter')addHab()">
+      <button class="btn" onclick="addHab()">+ Adicionar hábito</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT TASK MODAL -->
+<div id="edit-modal" class="mo" onclick="if(event.target.id==='edit-modal')closeEdit()">
+  <div class="moc">
+    <div style="font-family:Georgia,serif;font-size:18px;color:var(--cream);margin-bottom:1rem">Editar tarefa</div>
+    <input id="et-text" placeholder="Texto da tarefa..." style="width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);margin-bottom:8px;font-family:inherit;outline:none;">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <select id="et-prio" style="flex:1;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit;">
+        <option value="alta">🔴 Alta</option>
+        <option value="media">🟡 Média</option>
+        <option value="baixa">🟢 Baixa</option>
+      </select>
+      <input id="et-due" type="date" style="flex:1;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit;">
+    </div>
+    <input id="et-notes" placeholder="Notas (opcional)" style="width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);margin-bottom:12px;font-family:inherit;outline:none;">
+    <button class="btn pri" onclick="saveEdit()">Salvar</button>
+  </div>
+</div>
+
+
+<!-- EDIT GASTO MODAL -->
+<div id="edit-gasto-modal" class="mo" onclick="if(event.target.id==='edit-gasto-modal')closeEditG()">
+  <div class="moc">
+    <div style="font-family:Georgia,serif;font-size:18px;color:var(--cream);margin-bottom:1rem">Editar gasto</div>
+    <input id="eg-desc" placeholder="Descrição..." style="width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);margin-bottom:8px;font-family:inherit;outline:none;">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input id="eg-val" type="number" placeholder="Valor" style="flex:1;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit;">
+      <select id="eg-cur" style="padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit;"><option>BRL</option><option>UYU</option><option>USD</option></select>
+    </div>
+    <select id="eg-cat" style="width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);margin-bottom:8px;font-family:inherit;"><option>Alimentação</option><option>Transporte</option><option>Academia</option><option>Saúde</option><option>Lazer</option><option>Estudo</option><option>Casa</option><option>Outro</option></select>
+    <select id="eg-banco" style="width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);margin-bottom:8px;font-family:inherit;"><option value="">Banco</option><option>Nubank</option><option>Itaú</option><option>Inter</option><option>C6</option><option>Outro</option></select>
+    <input id="eg-data" type="date" style="width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);margin-bottom:12px;font-family:inherit;">
+    <button class="btn pri" onclick="saveEditG()">Salvar</button>
+  </div>
+</div>
+
+<!-- EDIT BILL MODAL -->
+<div id="edit-bill-modal" class="mo" onclick="if(event.target.id==='edit-bill-modal')closeEditB()">
+  <div class="moc">
+    <div style="font-family:Georgia,serif;font-size:18px;color:var(--cream);margin-bottom:1rem">Editar conta</div>
+    <input id="eb-name" placeholder="Nome da conta..." style="width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);margin-bottom:8px;font-family:inherit;outline:none;">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input id="eb-val" type="number" placeholder="Valor" style="flex:1;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit;">
+      <select id="eb-cur" style="padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit;"><option>BRL</option><option>UYU</option><option>USD</option></select>
+    </div>
+    <input id="eb-due" type="date" style="width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);margin-bottom:8px;font-family:inherit;">
+    <select id="eb-banco" style="width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);margin-bottom:8px;font-family:inherit;"><option value="">Banco</option><option>Nubank</option><option>Itaú</option><option>Inter</option><option>C6</option><option>Outro</option></select>
+    <select id="eb-forma" style="width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);margin-bottom:12px;font-family:inherit;"><option value="">Forma de pagamento</option><option>Débito automático</option><option>Boleto</option><option>Cartão de crédito</option><option>Pix</option></select>
+    <button class="btn pri" onclick="saveEditB()">Salvar</button>
+  </div>
+</div>
+
+<!-- CHAT BUTTON -->
+<button id="chat-btn" onclick="toggleChat()" style="position:fixed;bottom:80px;right:16px;width:52px;height:52px;border-radius:50%;background:var(--gold);border:none;cursor:pointer;font-size:24px;box-shadow:0 4px 16px rgba(106,143,212,.4);z-index:150;display:flex;align-items:center;justify-content:center;">✨</button>
+
+<!-- CHAT PANEL -->
+<div id="chat-panel" style="display:none;position:fixed;bottom:80px;right:0;width:100%;max-width:420px;height:65vh;background:var(--surface);border-radius:16px 16px 0 0;border:1px solid var(--border);z-index:150;flex-direction:column;box-shadow:0 -4px 24px rgba(0,0,0,.4);">
+  <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <span style="font-family:Georgia,serif;font-size:16px;color:var(--cream)">✨ Zentra</span>
+      <div style="font-size:11px;color:var(--text2)">Diga o que quer fazer</div>
+    </div>
+    <button onclick="toggleChat()" style="background:transparent;border:none;color:var(--text2);font-size:20px;cursor:pointer">×</button>
+  </div>
+  <div id="chat-msgs" style="flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;"></div>
+  <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center">
+    <input id="chat-input" placeholder="Ex: add tarefa reunião BRINTA sexta..." style="flex:1;padding:9px 12px;font-size:14px;border:1px solid var(--border2);border-radius:20px;background:var(--surface2);color:var(--cream);font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')sendChat()">
+    <button onclick="sendChat()" style="width:38px;height:38px;border-radius:50%;background:var(--gold);border:none;cursor:pointer;font-size:18px;flex-shrink:0">➤</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="bnav">
+  <button class="nb on" onclick="goTo('home',this)">
+    <span style="font-size:20px;line-height:1;display:block">🕛</span>
+    Início
+  </button>
+  <button class="nb" onclick="goTo('work',this)">
+    <span style="font-size:20px;line-height:1;display:block">🎠</span>
+    Trabalho
+  </button>
+  <button class="nb" onclick="goTo('pessoal',this)">
+    <span style="font-size:20px;line-height:1;display:block">👠</span>
+    Pessoal
+  </button>
+  <button class="nb" onclick="goTo('fin',this)">
+    <span style="font-size:20px;line-height:1;display:block">👛</span>
+    Finanças
+  </button>
+  <button class="nb" onclick="goTo('saude',this)">
+    <span style="font-size:20px;line-height:1;display:block">✨</span>
+    Saúde
+  </button>
+</nav>
+</div>
+
+<script>
+
+function $(id){return document.getElementById(id);}
+const SUPA_URL='https://raboikyezplxhxxropvf.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhYm9pa3llenBseGh4eHJvcHZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MTQyNjIsImV4cCI6MjA5NTA5MDI2Mn0.7IID_hKsYXge6PK7n2JX0F10dVDMtbLJ068mWkH6Kpw';
+const H={'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'};
+let curTab='home',wf='all',pf='all';
+
+// UTILS
+function du(d){if(!d)return null;const a=new Date(d+'T00:00:00'),b=new Date();b.setHours(0,0,0,0);return Math.ceil((a-b)/864e5);}
+function uc(d){const n=du(d);if(n===null)return'';if(n<=0)return'urgent';if(n<=3)return'warn';return'';}
+function ul(d){const n=du(d);if(n===null)return'';if(n<0)return'<span class="utag ured">'+Math.abs(n)+'d atraso</span>';if(n===0)return'<span class="utag ured">Hoje</span>';if(n<=3)return'<span class="utag uamb">'+n+'d</span>';return'';}
+function fd(s){if(!s)return'';const p=s.slice(0,10).split('-');return p[2]+'/'+p[1];}
+function td(){return new Date().toISOString().slice(0,10);}
+function tm(){return new Date().toISOString().slice(0,7);}
+function ls(k,d){try{return JSON.parse(localStorage.getItem(k))??d;}catch(e){return d;}}
+function lss(k,v){localStorage.setItem(k,JSON.stringify(v));}
+
+// API
+async function api(table,method,body,filter){
+  try{
+    let url=SUPA_URL+'/rest/v1/'+table;
+    if(filter)url+='?'+filter;
+    const o={method,headers:{...H}};
+    if(body)o.body=JSON.stringify(body);
+    if(method==='POST')o.headers['Prefer']='return=representation';
+    const r=await fetch(url,o);
+    if(r.status===204)return true;
+    const t=await r.text();
+    try{return JSON.parse(t);}catch{return [];}
+  }catch(e){
+    console.error('API error:',table,method,e);
+    return [];
+  }
+}
+
+// NAV
+function goTo(s,btn){
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(x=>x.classList.remove('on'));
+  document.getElementById('s-'+s).classList.add('active');
+  btn.classList.add('on');
+  curTab=s;
+  render();
+}
+
+function render(){
+  if(curTab==='home')renderHome();
+  else if(curTab==='work')renderWork();
+  else if(curTab==='pessoal')renderPes();
+  else if(curTab==='fin'){
+    // show contas tab by default
+    const activeTab=document.querySelector('#s-fin .fb.on');
+    const tab=activeTab?activeTab.getAttribute('data-tab'):'contas';
+    if(tab==='contas'||!activeTab)renderBills();
+    else if(tab==='gastos')renderGastos();
+    else if(tab==='orc')renderOrc();
+    else if(tab==='comp')renderComp();
+    else if(tab==='div')renderDiv();
+    else if(tab==='graf')renderGraf();
+  }
+  else if(curTab==='saude')renderSaude();
+}
+
+// EDIT
+let editId=null;
+function openEdit(id,text,prio,due,notes){
+  editId=id;
+  $('et-text').value=text||'';
+  $('et-prio').value=prio||'media';
+  $('et-due').value=due||'';
+  $('et-notes').value=notes||'';
+  $('edit-modal').style.display='flex';
+}
+function closeEdit(){$('edit-modal').style.display='none';editId=null;}
+async function saveEdit(){
+  if(!editId)return;
+  const text=$('et-text').value.trim();if(!text)return;
+  await api('tasks','PATCH',{text,prio:$('et-prio').value,due:$('et-due').value||null,notes:$('et-notes').value||null},'id=eq.'+editId);
+  closeEdit();render();
+}
+
+// HOME
+async function renderHome(){
+  try{
+  const h=new Date().getHours();
+  document.getElementById('hgreet').textContent='Gabi';
+  document.getElementById('hdate').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  const [tr,br,gr]=await Promise.all([api('tasks','GET',null,'select=*'),api('bills','GET',null,'select=*'),api('gastos','GET',null,'select=*')]);
+  const tasks=Array.isArray(tr)?tr:[],bills=Array.isArray(br)?br:[],gastos=Array.isArray(gr)?gr:[];
+  const pend=tasks.filter(t=>!t.done);
+  const urg=pend.filter(t=>t.due&&du(t.due)<=0);
+  const bUp=bills.filter(b=>!b.paid&&b.due&&du(b.due)<=7);
+  const brl=gastos.filter(g=>g.cur==='BRL'&&g.data&&g.data.startsWith(tm())).reduce((s,g)=>s+Number(g.val),0);
+  document.getElementById('su').textContent=urg.length;
+  document.getElementById('sp').textContent=pend.length;
+  document.getElementById('sb2').textContent=bUp.length;
+  document.getElementById('sm').textContent='R$'+brl.toFixed(0);
+  const over=pend.filter(t=>t.due&&du(t.due)<0);
+  const ban=document.getElementById('hbanner');
+  if(over.length){ban.style.display='flex';document.getElementById('hbannertext').textContent=over.length+' tarefa(s) em atraso!';}
+  else ban.style.display='none';
+  const todT=pend.filter(t=>t.due&&du(t.due)===0);
+  const todB=bills.filter(b=>!b.paid&&b.due&&du(b.due)===0);
+  const upT=pend.filter(t=>t.due&&du(t.due)>0&&du(t.due)<=3);
+  const upB=bills.filter(b=>!b.paid&&b.due&&du(b.due)>0&&du(b.due)<=7);
+  document.getElementById('htoday').innerHTML=[...todT.map(miniT),...todB.map(miniB)].join('')||'<div class="empty" style="padding:1rem">Nada para hoje 🎉</div>';
+  document.getElementById('hup').innerHTML=[...upT.map(miniT),...upB.map(miniB)].join('')||'<div class="empty" style="padding:1rem">Nada nos próximos dias</div>';
+  }catch(e){console.error('renderHome error:',e);document.getElementById('htoday').innerHTML='<div class="empty" style="padding:1rem;color:var(--terra)">Erro ao carregar. Verifique sua conexão.</div>';}
+}
+
+const CL={brinta:'b0',cliente:'b1',pessoal:'b2',estudo:'b3'};
+const CN={brinta:'Produto',cliente:'Cliente',pessoal:'Vida',estudo:'Estudo'};
+
+function miniT(t){return `<div class="tr ${t.done?'done':uc(t.due)}"><div style="flex:1"><div class="tx">${t.text}</div><div class="txm"><span class="badge ${CL[t.cat]||'b2'}">${CN[t.cat]||t.cat}</span>${t.due?`<span class="dt">${fd(t.due)}</span>`:''}${ul(t.due)}</div></div></div>`;}
+function miniB(b){return `<div class="tr urgent"><div style="flex:1"><div class="tx">${b.name}</div><div class="txm"><span class="amt">${b.val}</span><span class="amtc"> ${b.cur}</span>${b.banco?`<span class="badge b0">${b.banco}</span>`:''}</div></div></div>`;}
+
+// TASKS
+function taskHTML(t){
+  const id=t.id;
+  const txt=t.text.replace(/"/g,'&quot;');
+  const notes=(t.notes||'').replace(/"/g,'&quot;');
+  return `<div class="tr ${t.done?'done':uc(t.due)}"><button class="cb ${t.done?'on':''}" onclick="togT('${id}',${!t.done})">${t.done?'✓':''}</button><div style="flex:1"><div class="tx">${t.text}</div><div class="txm"><span class="badge ${CL[t.cat]||'b2'}">${CN[t.cat]||t.cat}</span>${t.due?`<span class="dt">${fd(t.due)}</span>`:''}${!t.done?ul(t.due):''}${t.notes?`<span class="dt">${t.notes}</span>`:''}</div></div><button class="xb" style="font-size:14px;opacity:.6;margin-right:2px" onclick="openEdit('${id}','${txt}','${t.prio||'media'}','${t.due||''}','${notes}')">✏️</button><button class="xb" onclick="delT('${id}')">×</button></div>`;
+}
+
+function taskListHTML(ts){
+  const p=ts.filter(t=>!t.done);
+  if(!p.length)return'<div class="empty">Nenhuma tarefa pendente 🎉</div>';
+  let h='';
+  [['alta','🔴 Alta'],['media','🟡 Média'],['baixa','🟢 Baixa']].forEach(([prio,lbl])=>{const it=p.filter(t=>t.prio===prio);if(it.length)h+='<div class="sl">'+lbl+'</div>'+it.map(taskHTML).join('');});
+  return h||'<div class="empty">Nenhuma tarefa</div>';
+}
+
+async function togT(id,done){await api('tasks','PATCH',{done,completed_at:done?new Date().toISOString():null},'id=eq.'+id);render();}
+async function delT(id){await api('tasks','DELETE',null,'id=eq.'+id);render();}
+
+// WORK
+async function renderWork(){
+  if(wf==='hist'){
+    const d=await api('tasks','GET',null,'cat=in.(brinta,cliente)&select=*&order=completed_at.desc');
+    const done=(Array.isArray(d)?d:[]).filter(t=>t.done);
+    document.getElementById('wklist').innerHTML=done.length?done.map(taskHTML).join(''):'<div class="empty">Nenhuma tarefa concluída</div>';
+    document.getElementById('wkclear').style.display='none';
+  }else{
+    const d=await api('tasks','GET',null,'cat=in.(brinta,cliente)&select=*&order=created_at');
+    const all=Array.isArray(d)?d:[];
+    const fil=wf==='all'?all:all.filter(t=>t.cat===wf);
+    document.getElementById('wklist').innerHTML=taskListHTML(fil);
+    document.getElementById('wkclear').style.display=all.some(t=>t.done)?'block':'none';
+  }
+  renderHoras();
+}
+function fWork(btn,f){wf=f;document.querySelectorAll('#s-work .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderWork();}
+function wkSub(s){document.querySelectorAll('#s-work .ss').forEach(x=>x.classList.remove('active'));document.getElementById('wk-'+s).classList.add('active');}
+async function addWk(){const t=document.getElementById('wt').value.trim();if(!t)return;await api('tasks','POST',{text:t,cat:document.getElementById('wcat').value,prio:document.getElementById('wprio').value,due:document.getElementById('wdue').value||null,notes:document.getElementById('wnotes').value||null,done:false});['wt','wdue','wnotes'].forEach(i=>document.getElementById(i).value='');renderWork();}
+async function clearWkDone(){if(!confirm('Limpar tarefas de trabalho concluídas?'))return;await api('tasks','DELETE',null,'cat=in.(brinta,cliente)&done=eq.true');renderWork();}
+
+// PESSOAL
+async function renderPes(){
+  if(pf==='hist'){
+    const d=await api('tasks','GET',null,'cat=in.(pessoal,estudo)&select=*&order=completed_at.desc');
+    const done=(Array.isArray(d)?d:[]).filter(t=>t.done);
+    document.getElementById('pslist').innerHTML=done.length?done.map(taskHTML).join(''):'<div class="empty">Nenhuma tarefa concluída</div>';
+  }else{
+    const d=await api('tasks','GET',null,'cat=in.(pessoal,estudo)&select=*&order=created_at');
+    const all=Array.isArray(d)?d:[];
+    const fil=pf==='all'?all:all.filter(t=>t.cat===pf);
+    document.getElementById('pslist').innerHTML=taskListHTML(fil);
+  }
+  renderHab();renderMetas();
+}
+function fPes(btn,f){pf=f;document.querySelectorAll('#s-pessoal .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderPes();}
+function psSub(s){document.querySelectorAll('#s-pessoal .ss').forEach(x=>x.classList.remove('active'));if(s==='main'){document.getElementById('ps-main').classList.add('active');}else{document.getElementById('ps-'+s).classList.add('active');}}
+async function addPs(){const t=document.getElementById('pt').value.trim();if(!t)return;await api('tasks','POST',{text:t,cat:document.getElementById('pcat').value,prio:document.getElementById('pprio').value,due:document.getElementById('pdue').value||null,done:false});['pt','pdue'].forEach(i=>document.getElementById(i).value='');renderPes();}
+
+// FIN
+function showFin(btn,tab){
+  document.querySelectorAll('#s-fin .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  ['contas','gastos','orc','comp','div','graf'].forEach(t=>document.getElementById('fin-'+t).style.display=t===tab?'block':'none');
+  if(tab==='contas')renderBills();else if(tab==='gastos')renderGastos();else if(tab==='orc')renderOrc();else if(tab==='comp')renderComp();else if(tab==='div')renderDiv();else if(tab==='graf')renderGraf();
+}
+
+// BILLS
+async function renderBills(){
+  const d=await api('bills','GET',null,'select=*&order=due');
+  const bills=Array.isArray(d)?d:[];
+  const pend=bills.filter(b=>!b.paid),paid=bills.filter(b=>b.paid);
+  let h='';
+  if(pend.length){h+='<div class="sl">Pendentes</div>';h+=pend.map(b=>`<div class="tr ${uc(b.due)}"><button class="cb" onclick="togB('${b.id}',true)"></button><div style="flex:1"><div class="tx">${b.name}</div><div class="txm"><span class="amt">${b.val}</span><span class="amtc"> ${b.cur}</span>${b.banco?`<span class="badge b0">${b.banco}</span>`:''}${b.forma_pagamento?`<span class="dt">${b.forma_pagamento}</span>`:''}${b.due?`<span class="dt">${fd(b.due)}</span>`:''}${ul(b.due)}</div></div><button class="xb" style="font-size:14px;opacity:.6;margin-right:2px" onclick="openEditB('${b.id}','${(b.name||'').replace(/'/g,"\\'")}',${b.val},'${b.cur}','${b.due||''}','${b.banco||''}','${b.forma_pagamento||''}')">✏️</button><button class="xb" onclick="delB('${b.id}')">×</button></div>`).join('');}
+  if(paid.length){h+='<div class="sl">Pagas ('+paid.length+')</div>';h+=paid.map(b=>`<div class="tr done"><button class="cb on" onclick="togB('${b.id}',false)">✓</button><div style="flex:1"><div class="tx">${b.name}</div><div class="txm"><span class="dt">${b.val} ${b.cur}</span>${b.banco?`<span class="badge b0">${b.banco}</span>`:''}${b.paid_at?`<span class="dt">pago ${fd(b.paid_at)}</span>`:''}</div></div><button class="xb" onclick="delB('${b.id}')">×</button></div>`).join('');}
+  document.getElementById('billslist').innerHTML=h||'<div class="empty">Nenhuma conta cadastrada</div>';
+}
+async function togB(id,paid){await api('bills','PATCH',{paid,paid_at:paid?new Date().toISOString():null},'id=eq.'+id);renderBills();}
+async function delB(id){await api('bills','DELETE',null,'id=eq.'+id);renderBills();}
+async function addBill(){const n=document.getElementById('bn').value.trim(),v=parseFloat(document.getElementById('bv').value);if(!n||isNaN(v))return;await api('bills','POST',{name:n,val:v,cur:document.getElementById('bc').value,due:document.getElementById('bd').value||null,banco:document.getElementById('bb').value||null,forma_pagamento:document.getElementById('bf').value||null,paid:false});['bn','bv','bd'].forEach(i=>document.getElementById(i).value='');renderBills();}
+
+// GASTOS
+async function renderGastos(){
+  const d=await api('gastos','GET',null,'select=*&order=data.desc');
+  const g=Array.isArray(d)?d:[];
+  const brl=g.filter(x=>x.cur==='BRL').reduce((s,x)=>s+Number(x.val),0);
+  const uyu=g.filter(x=>x.cur==='UYU').reduce((s,x)=>s+Number(x.val),0);
+  const usd=g.filter(x=>x.cur==='USD').reduce((s,x)=>s+Number(x.val),0);
+  let sh='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.75rem">';
+  if(brl)sh+='<span class="badge b2">BRL '+brl.toFixed(0)+'</span>';
+  if(uyu)sh+='<span class="badge b0">UYU '+uyu.toFixed(0)+'</span>';
+  if(usd)sh+='<span class="badge b1">USD '+usd.toFixed(2)+'</span>';
+  sh+='</div>';
+  document.getElementById('gsum').innerHTML=sh;
+  document.getElementById('glist').innerHTML=g.length?g.map(x=>`<div class="tr"><div style="flex:1"><div class="tx">${x.descricao}</div><div class="txm"><span class="badge b3" style="font-size:10px">${x.cat}</span>${x.banco?`<span class="badge b0">${x.banco}</span>`:''}<span class="dt">${fd(x.data)}</span></div></div><div style="text-align:right;flex-shrink:0"><div class="amt">${Number(x.val).toFixed(2)}</div><div class="amtc">${x.cur}</div></div><button class="xb" style="font-size:14px;opacity:.6;margin-right:2px" onclick="openEditG('${x.id}','${(x.descricao||'').replace(/'/g,"\\'")}',${x.val},'${x.cur}','${x.cat}','${x.banco||''}','${x.data||''}')">✏️</button><button class="xb" onclick="delG('${x.id}')">×</button></div>`).join(''):'<div class="empty">Nenhum gasto registrado</div>';
+}
+async function delG(id){await api('gastos','DELETE',null,'id=eq.'+id);renderGastos();}
+async function addGasto(){const desc=document.getElementById('gd').value.trim(),v=parseFloat(document.getElementById('gv').value);if(!desc||isNaN(v))return;await api('gastos','POST',{descricao:desc,val:v,cur:document.getElementById('gc').value,cat:document.getElementById('gcat').value,banco:document.getElementById('gbanco').value||null,data:document.getElementById('gdate').value||td()});['gd','gv'].forEach(i=>document.getElementById(i).value='');renderGastos();}
+
+// ORC
+async function renderOrc(){
+  const t=ls('zentra-taxas',{usd:5.70,uyu:0.14});
+  document.getElementById('tusd').value=t.usd;
+  document.getElementById('tuyu').value=t.uyu;
+  const o=ls('zentra-orc',{});
+  const cats=['Alimentação','Transporte','Academia','Saúde','Lazer','Estudo','Casa','Outro'];
+  // Busca gastos do mês atual
+  const mesAtual=tm();
+  const d=await api('gastos','GET',null,'select=val,cur,cat&data=gte.'+mesAtual+'-01');
+  const gastosMes=Array.isArray(d)?d:[];
+  // Agrupa gasto BRL por categoria (converte moedas)
+  const gastoCat={};
+  gastosMes.forEach(g=>{
+    const brl=g.cur==='BRL'?Number(g.val):g.cur==='USD'?Number(g.val)*t.usd:Number(g.val)*t.uyu;
+    gastoCat[g.cat]=(gastoCat[g.cat]||0)+brl;
+  });
+  const catsComOrc=cats.filter(c=>o[c]);
+  if(!catsComOrc.length){document.getElementById('orclist').innerHTML='<div class="empty" style="padding:1rem">Nenhum orçamento definido</div>';return;}
+  document.getElementById('orclist').innerHTML=catsComOrc.map(c=>{
+    const lim=Number(o[c]);
+    const gasto=gastoCat[c]||0;
+    const pct=Math.min(100,lim>0?Math.round(gasto/lim*100):0);
+    const cor=pct>=100?'var(--red)':pct>=80?'var(--gold)':'var(--moss)';
+    return `<div class="card" style="margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:13px;color:var(--cream)">${c}</span>
+        <span style="font-size:12px;color:var(--text2)"><span style="color:${cor};font-weight:600">R$ ${gasto.toFixed(0)}</span> / R$ ${lim}</span>
+      </div>
+      <div class="pbar"><div class="pfill" style="background:${cor};width:${pct}%"></div></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px">${pct}% usado${pct>=100?' — limite atingido!':''}</div>
+    </div>`;
+  }).join('');
+}
+function saveTaxas(){lss('zentra-taxas',{usd:parseFloat(document.getElementById('tusd').value)||5.70,uyu:parseFloat(document.getElementById('tuyu').value)||0.14});alert('Taxas salvas!');}
+function addOrc(){const c=document.getElementById('ocat').value,v=parseFloat(document.getElementById('oval').value);if(!v)return;const o=ls('zentra-orc',{});o[c]=v;lss('zentra-orc',o);document.getElementById('oval').value='';renderOrc();}
+
+// COMPRAS (Supabase)
+async function renderComp(){
+  const d=await api('compras','GET',null,'select=*&order=created_at');
+  const items=Array.isArray(d)?d:[];
+  const total=items.filter(i=>i.preco).reduce((s,i)=>s+(Number(i.preco)*(i.qtd||1)),0);
+  document.getElementById('compcount').textContent=items.length+' itens'+(total?' · R$ '+total.toFixed(2):'');
+  document.getElementById('complist').innerHTML=items.length?items.map(x=>`<div class="hr-row"><div class="hr-cb ${x.done?'on':''}" onclick="togComp('${x.id}',${!x.done})">${x.done?'✓':''}</div><span style="flex:1;font-size:14px;color:var(--cream);${x.done?'text-decoration:line-through;opacity:.5':''}">${x.nome}${x.qtd>1?' ×'+x.qtd:''}</span>${x.preco?`<span class="dt">R$ ${(Number(x.preco)*(x.qtd||1)).toFixed(2)}</span>`:''}<button class="xb" onclick="delComp('${x.id}')">×</button></div>`).join(''):'<div class="empty">Lista vazia</div>';
+}
+async function togComp(id,done){await api('compras','PATCH',{done},'id=eq.'+id);renderComp();}
+async function delComp(id){await api('compras','DELETE',null,'id=eq.'+id);renderComp();}
+async function clearComp(){await api('compras','DELETE',null,'done=eq.true');renderComp();}
+async function addComp(){const n=document.getElementById('ci').value.trim();if(!n)return;await api('compras','POST',{nome:n,qtd:parseInt(document.getElementById('cq').value)||1,preco:parseFloat(document.getElementById('cp').value)||null,done:false});['ci','cq','cp'].forEach(i=>document.getElementById(i).value='');renderComp();}
+
+// DÍVIDAS
+function renderDiv(){const divs=ls('zentra-div',[]);const taxas=ls('zentra-taxas',{usd:5.70,uyu:0.14});const tot=divs.filter(d=>!d.rec).reduce((s,d)=>s+(d.cur==='BRL'?d.v:d.cur==='USD'?d.v*taxas.usd:d.v*taxas.uyu),0);document.getElementById('divlist').innerHTML=divs.length?divs.map((d,i)=>'<div class="tr '+(d.rec?'done':'')+'"><button class="cb '+(d.rec?'on':'')+'" onclick="togDiv('+i+')">'+(d.rec?'✓':'')+'</button><div style="flex:1"><div class="tx">'+d.q+'</div><div class="txm"><span class="amt">'+d.v+'</span><span class="amtc"> '+d.cur+'</span>'+(d.ba?'<span class="badge b0">'+d.ba+'</span>':'')+(d.rec?'<span class="dt">recebido</span>':'')+'</div></div><button class="xb" onclick="delDiv('+i+')">×</button></div>').join(''):'<div class="empty">Nenhuma dívida</div>';}
+function togDiv(i){const d=ls('zentra-div',[]);d[i].rec=!d[i].rec;lss('zentra-div',d);renderDiv();}
+function delDiv(i){const d=ls('zentra-div',[]);d.splice(i,1);lss('zentra-div',d);renderDiv();}
+function addDiv(){const q=document.getElementById('dquem').value.trim(),v=parseFloat(document.getElementById('dval').value);if(!q||isNaN(v))return;const d=ls('zentra-div',[]);d.push({q,v,cur:document.getElementById('dcur').value,ba:document.getElementById('dbanco').value||null,rec:false});lss('zentra-div',d);['dquem','dval'].forEach(i=>document.getElementById(i).value='');renderDiv();}
+
+// EDIT GASTO
+let editGId=null;
+function openEditG(id,desc,val,cur,cat,banco,data){
+  editGId=id;
+  document.getElementById('eg-desc').value=desc||'';
+  document.getElementById('eg-val').value=val||'';
+  document.getElementById('eg-cur').value=cur||'BRL';
+  document.getElementById('eg-cat').value=cat||'Outro';
+  document.getElementById('eg-banco').value=banco||'';
+  document.getElementById('eg-data').value=data||'';
+  document.getElementById('edit-gasto-modal').style.display='flex';
+}
+function closeEditG(){document.getElementById('edit-gasto-modal').style.display='none';editGId=null;}
+async function saveEditG(){
+  if(!editGId)return;
+  const desc=document.getElementById('eg-desc').value.trim();
+  const val=parseFloat(document.getElementById('eg-val').value);
+  if(!desc||isNaN(val))return;
+  await api('gastos','PATCH',{descricao:desc,val,cur:document.getElementById('eg-cur').value,cat:document.getElementById('eg-cat').value,banco:document.getElementById('eg-banco').value||null,data:document.getElementById('eg-data').value||td()},'id=eq.'+editGId);
+  closeEditG();renderGastos();
+}
+
+// EDIT BILL
+let editBId=null;
+function openEditB(id,name,val,cur,due,banco,forma){
+  editBId=id;
+  document.getElementById('eb-name').value=name||'';
+  document.getElementById('eb-val').value=val||'';
+  document.getElementById('eb-cur').value=cur||'BRL';
+  document.getElementById('eb-due').value=due||'';
+  document.getElementById('eb-banco').value=banco||'';
+  document.getElementById('eb-forma').value=forma||'';
+  document.getElementById('edit-bill-modal').style.display='flex';
+}
+function closeEditB(){document.getElementById('edit-bill-modal').style.display='none';editBId=null;}
+async function saveEditB(){
+  if(!editBId)return;
+  const name=document.getElementById('eb-name').value.trim();
+  const val=parseFloat(document.getElementById('eb-val').value);
+  if(!name||isNaN(val))return;
+  await api('bills','PATCH',{name,val,cur:document.getElementById('eb-cur').value,due:document.getElementById('eb-due').value||null,banco:document.getElementById('eb-banco').value||null,forma_pagamento:document.getElementById('eb-forma').value||null},'id=eq.'+editBId);
+  closeEditB();renderBills();
+}
+
+// GRÁFICOS
+let chartCat=null,chartMensal=null;
+async function renderGraf(){
+  const d=await api('gastos','GET',null,'select=val,cur,cat,data&order=data.desc');
+  const gastos=Array.isArray(d)?d:[];
+  const t=ls('zentra-taxas',{usd:5.70,uyu:0.14});
+  const mes=tm();
+
+  // Por categoria — mês atual
+  const catMap={};
+  gastos.filter(g=>g.data&&g.data.startsWith(mes)).forEach(g=>{
+    const brl=g.cur==='BRL'?Number(g.val):g.cur==='USD'?Number(g.val)*t.usd:Number(g.val)*t.uyu;
+    catMap[g.cat]=(catMap[g.cat]||0)+brl;
+  });
+  const catsK=Object.keys(catMap).sort((a,b)=>catMap[b]-catMap[a]);
+  const cores=['#6A8FD4','#E87AB8','#7AB8E8','#A8C4F0','#E8C87A','#7AE8B8','#E87A7A','#B87AE8'];
+
+  const ctxCat=document.getElementById('chart-cat');
+  if(chartCat){chartCat.destroy();chartCat=null;}
+  if(catsK.length){
+    chartCat=new Chart(ctxCat,{type:'doughnut',data:{labels:catsK,datasets:[{data:catsK.map(c=>catMap[c].toFixed(2)),backgroundColor:cores,borderWidth:0}]},options:{plugins:{legend:{labels:{color:'#A0B4D8',font:{size:12}}}},cutout:'65%'}});
+  } else {
+    ctxCat.parentElement.innerHTML='<div class="empty">Sem gastos este mês</div>';
+  }
+
+  // Evolução mensal — últimos 6 meses
+  const meses=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);meses.push(d.toISOString().slice(0,7));}
+  const totMes=meses.map(m=>gastos.filter(g=>g.data&&g.data.startsWith(m)&&g.cur==='BRL').reduce((s,g)=>s+Number(g.val),0));
+  const labMes=meses.map(m=>{const[y,mo]=m.split('-');return['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][parseInt(mo)-1];});
+
+  const ctxM=document.getElementById('chart-mensal');
+  if(chartMensal){chartMensal.destroy();chartMensal=null;}
+  chartMensal=new Chart(ctxM,{type:'bar',data:{labels:labMes,datasets:[{label:'BRL',data:totMes,backgroundColor:'rgba(106,143,212,0.6)',borderColor:'#6A8FD4',borderWidth:1,borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7A9CC8'},grid:{display:false}},y:{ticks:{color:'#7A9CC8'},grid:{color:'#141C2E'}}}}});
+
+  // Resumo
+  const totalMes=Object.values(catMap).reduce((s,v)=>s+v,0);
+  document.getElementById('graf-resumo').innerHTML=totalMes?`<div class="card" style="text-align:center"><div style="font-family:Georgia,serif;font-size:28px;color:var(--gold)">R$ ${totalMes.toFixed(0)}</div><div class="dt">total gasto em ${labMes[5]}</div></div>`:'';
+}
+
+// HÁBITOS
+function renderHab(){const h=ls('zentra-hab',[]),done=ls('zentra-hab-'+td(),[]);
+  const svhab=document.getElementById('sv-hab');if(svhab)svhab.textContent=done.length+'/'+h.length;
+  document.getElementById('hablist').innerHTML=h.length?h.map((x,i)=>'<div class="hr-row"><div class="hr-cb '+(done.includes(i)?'on':'')+'" onclick="togHab('+i+')">'+(done.includes(i)?'✓':'')+'</div><span style="flex:1;font-size:14px;color:var(--cream)">'+x+'</span><button class="xb" onclick="delHab('+i+')">×</button></div>').join(''):'<div class="empty">Nenhum hábito ainda</div>';}
+function togHab(i){const done=ls('zentra-hab-'+td(),[]);const idx=done.indexOf(i);if(idx>=0)done.splice(idx,1);else done.push(i);lss('zentra-hab-'+td(),done);renderHab();}
+function delHab(i){const h=ls('zentra-hab',[]);h.splice(i,1);lss('zentra-hab',h);renderHab();}
+function addHab(){const t=document.getElementById('habinput').value.trim();if(!t)return;const h=ls('zentra-hab',[]);h.push(t);lss('zentra-hab',h);document.getElementById('habinput').value='';renderHab();}
+
+// METAS
+function renderMetas(){const m=ls('zentra-metas',[]);const pl={diaria:'📅',semanal:'📆',mensal:'🗓',anual:'🎯',unica:'⭐'};document.getElementById('metaslist').innerHTML=m.length?m.map((x,i)=>'<div class="tr '+(x.done?'done':'')+'"><button class="cb '+(x.done?'on':'')+'" onclick="togMeta('+i+')">'+(x.done?'✓':'')+'</button><div style="flex:1"><div class="tx">'+x.t+'</div><div class="txm"><span class="badge b3">'+(pl[x.p]||'')+''+x.p+'</span>'+(x.d?'<span class="dt">'+fd(x.d)+'</span>':'')+'</div></div><button class="xb" onclick="delMeta('+i+')">×</button></div>').join(''):'<div class="empty">Nenhuma meta ainda</div>';}
+function togMeta(i){const m=ls('zentra-metas',[]);m[i].done=!m[i].done;lss('zentra-metas',m);renderMetas();}
+function delMeta(i){const m=ls('zentra-metas',[]);m.splice(i,1);lss('zentra-metas',m);renderMetas();}
+function addMeta(){const t=document.getElementById('metainput').value.trim();if(!t)return;const m=ls('zentra-metas',[]);m.push({t,p:document.getElementById('metatipo').value,d:document.getElementById('metadue').value||null,done:false});lss('zentra-metas',m);['metainput','metadue'].forEach(i=>document.getElementById(i).value='');renderMetas();}
+
+// HORAS
+function renderHoras(){const h=ls('zentra-horas',[]);const tot=h.reduce((s,x)=>s+x.h,0);document.getElementById('horaslist').innerHTML=h.length?'<div class="card" style="text-align:center;margin-bottom:.75rem"><span style="font-family:Georgia,serif;font-size:28px;color:var(--gold)">'+tot.toFixed(1)+'h</span><div class="dt">total</div></div>'+h.slice().reverse().map((x,i)=>'<div class="hr-row"><div style="flex:1"><div style="font-size:14px;color:var(--cream)">'+x.h+'h — '+x.p+'</div>'+(x.d?'<div class="dt">'+x.d+'</div>':'')+'<div class="dt">'+fd(x.dt)+'</div></div><button class="xb" onclick="delHora('+((h.length-1-i))+')">×</button></div>').join(''):'<div class="empty">Nenhuma hora registrada</div>';}
+function delHora(i){const h=ls('zentra-horas',[]);h.splice(i,1);lss('zentra-horas',h);renderHoras();}
+function addHoras(){const hr=parseFloat(document.getElementById('hhrs').value);if(!hr)return;const h=ls('zentra-horas',[]);h.push({h:hr,p:document.getElementById('hproj').value,d:document.getElementById('hdesc').value||null,dt:document.getElementById('hdate2').value||td()});lss('zentra-horas',h);['hhrs','hdesc'].forEach(i=>document.getElementById(i).value='');renderHoras();}
+
+// POMODORO
+let pi=null,ps2=25*60,pr=false,pc=ls('zentra-pomo-'+td(),0),pfoc=true,pfm=25,pbm=5;
+function setPomo(f,b,btn){pfm=f;pbm=b;ps2=f*60;document.querySelectorAll('#wk-pomo .fb').forEach(x=>x.classList.remove('on'));btn.classList.add('on');resetPomo();}
+function updPomo(){const m=Math.floor(ps2/60),s=ps2%60;document.getElementById('ptime').textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;document.getElementById('plabel').textContent=pfoc?'🍅 Foco':'☕ Pausa';document.getElementById('pcycles').textContent=pc;}
+function togglePomo(){if(pr){clearInterval(pi);pr=false;document.getElementById('pbtn').textContent='Continuar';}else{pr=true;document.getElementById('pbtn').textContent='Pausar';pi=setInterval(()=>{ps2--;if(ps2<=0){if(pfoc){pc++;lss('zentra-pomo-'+td(),pc);}pfoc=!pfoc;ps2=pfoc?pfm*60:pbm*60;}updPomo();},1000);}}
+function resetPomo(){clearInterval(pi);pr=false;pfoc=true;ps2=pfm*60;document.getElementById('pbtn').textContent='Iniciar';updPomo();}
+
+// SAÚDE
+function openS(s){document.querySelectorAll('#s-saude .ss').forEach(x=>x.classList.remove('active'));document.getElementById('sd-'+s).classList.add('active');}
+function closeS(){document.querySelectorAll('#s-saude .ss').forEach(x=>x.classList.remove('active'));document.getElementById('sd-main').classList.add('active');}
+
+async function renderSaude(){
+  const regs=await api('registros','GET',null,'select=*&order=data.desc');
+  const all=Array.isArray(regs)?regs:[];
+  const pesos=all.filter(r=>r.tipo==='peso'),treinos=all.filter(r=>r.tipo==='academia'),alims=all.filter(r=>r.tipo==='alimentacao'&&r.data===td()),sonos=all.filter(r=>r.tipo==='sono');
+  const meta=ls('zentra-smeta',{peso:null,sono:7,agua:8,treino:4,kcal:2000});
+  if(pesos.length){const pesoAtual=parseFloat(pesos[0].valor);document.getElementById('sv-peso').textContent=pesos[0].valor+' kg';document.getElementById('pdisplay').textContent=pesos[0].valor;
+  if(meta.peso){const diff=(pesoAtual-parseFloat(meta.peso)).toFixed(1);document.getElementById('pmeta').textContent='Meta: '+meta.peso+' kg ('+( diff>0?'+':'')+diff+' kg)';const pct=Math.max(0,Math.min(100,100-(Math.abs(diff)/pesoAtual*100)));document.getElementById('pprog').style.width=pct+'%';document.getElementById('pprogbar').style.display='block';}else{document.getElementById('pmeta').textContent='';document.getElementById('pprogbar').style.display='none';}}
+  const si=new Date();si.setDate(si.getDate()-si.getDay());
+  const trsem=treinos.filter(t=>new Date(t.data+'T00:00:00')>=si);
+  document.getElementById('sv-treino').textContent=trsem.length+'/'+(meta.treino||4)+' esta semana';
+  document.getElementById('trsem').textContent=trsem.length;
+  document.getElementById('tracum').textContent=ls('zentra-acum',0);
+  const dias=['D','S','T','Q','Q','S','S'],trD=trsem.map(t=>new Date(t.data+'T00:00:00').getDay());
+  document.getElementById('trweek').innerHTML=dias.map((d,i)=>'<div style="flex:1;text-align:center;font-size:10px;color:'+(trD.includes(i)?'var(--moss)':'var(--text3)')+'">'+(trD.includes(i)?'✓':d)+'</div>').join('');
+  document.getElementById('trlist').innerHTML=treinos.slice(0,5).map(t=>`<div class="hr-row"><span style="flex:1;font-size:14px;color:var(--cream)">${t.valor}${t.notas?' — '+t.notas:''}</span><span class="dt">${fd(t.data)}</span><button class="xb" onclick="delR('${t.id}')">×</button></div>`).join('');
+  const kcal=alims.reduce((s,a)=>s+(parseInt(a.valor)||0),0);
+  const prot=alims.reduce((s,a)=>s+(parseInt(a.banco)||0),0);
+  document.getElementById('sv-alim').textContent=kcal+' kcal · '+prot+'g prot';
+  document.getElementById('akcal').textContent=kcal;
+  document.getElementById('ametadisp').textContent=meta.kcal||2000;
+  document.getElementById('aprog').style.width=Math.min(100,kcal/(meta.kcal||2000)*100)+'%';
+  document.getElementById('aprotdisplay').textContent=prot;
+  document.getElementById('aprotmetadisp').textContent=meta.prot||'–';
+  document.getElementById('aprotprog').style.width=meta.prot?Math.min(100,prot/meta.prot*100)+'%':'0%';
+  document.getElementById('alist').innerHTML=alims.map(a=>`<div class="hr-row"><span style="flex:1;font-size:14px;color:var(--cream)">${a.notas||'Refeição'}</span><div style="text-align:right"><span class="dt">${a.valor} kcal</span>${a.banco?`<span class="dt"> · ${a.banco}g prot</span>`:''}</div><button class="xb" onclick="delR('${a.id}')">×</button></div>`).join('');
+  if(sonos.length){document.getElementById('sv-sono').textContent=sonos[0].valor+'h';document.getElementById('sdisplay').textContent=sonos[0].valor;}
+  const med7=sonos.slice(0,7).reduce((s,x)=>s+(parseFloat(x.valor)||0),0)/(Math.min(sonos.length,7)||1);
+  document.getElementById('smedia').textContent=med7.toFixed(1);
+  document.getElementById('slist').innerHTML=sonos.slice(0,5).map(s=>`<div class="hr-row"><span style="flex:1;font-size:14px;color:var(--cream)">${s.valor}h</span><span class="dt">${fd(s.data)}</span><button class="xb" onclick="delR('${s.id}')">×</button></div>`).join('');
+  const agua=ls('zentra-agua-'+td(),0),ma=meta.agua||8;
+  document.getElementById('sv-agua').textContent=agua+'/'+(ma||2000)+'ml';
+  document.getElementById('aguaml').textContent=agua;document.getElementById('aguacount').textContent=Math.round(agua/250)+' copos aprox.';document.getElementById('aguametad').textContent=ma||2000;
+  document.getElementById('aguaprog').style.width=Math.min(100,agua/ma*100)+'%';
+  const meds=ls('zentra-meds',[]);
+  document.getElementById('sv-meds').textContent=meds.length+' medicamento'+(meds.length!==1?'s':'');
+  renderMedsScreen(meds);
+  document.getElementById('plist').innerHTML=pesos.slice(0,5).map(p=>`<div class="hr-row"><span style="flex:1;font-size:14px;color:var(--cream)">${p.valor} kg</span><span class="dt">${fd(p.data)}</span><button class="xb" onclick="delR('${p.id}')">×</button></div>`).join('');
+}
+
+function renderMedsScreen(meds){document.getElementById('medslist').innerHTML=(meds||ls('zentra-meds',[])).length?(meds||ls('zentra-meds',[])).map((m,i)=>'<div class="tr"><div style="flex:1"><div class="tx">'+m.n+'</div><div class="txm">'+(m.d?'<span class="dt">'+m.d+'</span>':'')+(m.f?'<span class="badge b3">'+m.f+'</span>':'')+(m.p?'<span class="dt">próx: '+fd(m.p)+'</span>':'')+'</div></div><button class="xb" onclick="delMed('+i+')">×</button></div>').join(''):'<div class="empty">Nenhum medicamento</div>';}
+function addMed(){const n=document.getElementById('mn').value.trim();if(!n)return;const meds=ls('zentra-meds',[]);meds.push({n,d:document.getElementById('md').value||null,p:document.getElementById('mp').value||null,f:document.getElementById('mf').value||null});lss('zentra-meds',meds);['mn','md','mp','mf'].forEach(i=>document.getElementById(i).value='');renderMedsScreen(meds);}
+function delMed(i){const meds=ls('zentra-meds',[]);meds.splice(i,1);lss('zentra-meds',meds);renderMedsScreen(meds);}
+
+async function addPeso(){const v=document.getElementById('pv').value.trim();if(!v)return;const mt=parseFloat(document.getElementById('pm').value);if(mt){const m=ls('zentra-smeta',{});m.peso=mt;lss('zentra-smeta',m);}await api('registros','POST',{tipo:'peso',valor:v,data:document.getElementById('pd').value||td()});['pv','pm'].forEach(i=>document.getElementById(i).value='');renderSaude();}
+async function addTreino(){const t=document.getElementById('trt').value,min=document.getElementById('trmin').value,cal=document.getElementById('trcal').value,muscle=document.getElementById('trmuscle').value.trim();const notas=[muscle,min?min+'min':'',cal?cal+'kcal':''].filter(Boolean).join(' · ');await api('registros','POST',{tipo:'academia',valor:t,notas:notas||null,data:document.getElementById('trd').value||td()});const a=ls('zentra-acum',0);lss('zentra-acum',a+1);['trmin','trcal','trmuscle'].forEach(i=>document.getElementById(i).value='');renderSaude();}
+function saveAcum(){const v=parseInt(document.getElementById('tracuminput').value);if(isNaN(v))return;lss('zentra-acum',v);document.getElementById('tracum').textContent=v;alert('Salvo!');}
+function zeraSem(){if(confirm('Zerar contador semanal?')){lss('zentra-acum',0);document.getElementById('tracum').textContent=0;renderSaude();}}
+async function addAlim(){const r=document.getElementById('aref').value.trim(),k=document.getElementById('akcalin').value,pr=document.getElementById('aprot').value;if(!r)return;const mt=parseInt(document.getElementById('ametain').value);const mtp=parseInt(document.getElementById('aprotmeta').value);const m=ls('zentra-smeta',{});if(mt){m.kcal=mt;}if(mtp){m.prot=mtp;}if(mt||mtp)lss('zentra-smeta',m);await api('registros','POST',{tipo:'alimentacao',valor:k||'0',notas:r,data:td(),banco:pr||null});['aref','akcalin','ametain','aprot','aprotmeta'].forEach(i=>document.getElementById(i).value='');renderSaude();}
+async function addSono(){const h=document.getElementById('sho').value.trim();if(!h)return;await api('registros','POST',{tipo:'sono',valor:h,data:document.getElementById('sd2').value||td()});['sho'].forEach(i=>document.getElementById(i).value='');renderSaude();}
+async function delR(id){await api('registros','DELETE',null,'id=eq.'+id);renderSaude();}
+function addAguaMl(ml){if(!ml)return;const m=ls('zentra-smeta',{agua:2000});const meta=m.agua||2000;const a=ls('zentra-agua-'+td(),0);const novo=Math.max(0,a+ml);lss('zentra-agua-'+td(),novo);const pct=Math.min(100,novo/meta*100);document.getElementById('aguaml').textContent=novo;document.getElementById('aguacount').textContent=Math.round(novo/250)+' copos aprox.';document.getElementById('sv-agua').textContent=novo+'/'+meta+'ml';document.getElementById('aguaprog').style.width=pct+'%';}
+function addAgua(){addAguaMl(250);}
+function remAgua(){addAguaMl(-250);}
+function saveAguaMeta(){const v=parseInt(document.getElementById('aguametain').value)||2000;const m=ls('zentra-smeta',{});m.agua=v;lss('zentra-smeta',m);document.getElementById('aguametad').textContent=v;}
+
+// INIT
+document.getElementById('hdate2').value=td();
+document.getElementById('pd').value=td();
+document.getElementById('trd').value=td();
+document.getElementById('sd2').value=td();
+document.getElementById('gdate').value=td();
+updPomo();
+renderHome();
+
+
+// ===== ZENTRA CHAT =====
+const GKEY = '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';
+const SBU2 = 'https://raboikyezplxhxxropvf.supabase.co';
+const SBK2 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhYm9pa3llenBseGh4eHJvcHZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MTQyNjIsImV4cCI6MjA5NTA5MDI2Mn0.7IID_hKsYXge6PK7n2JX0F10dVDMtbLJ068mWkH6Kpw';
+let chatOpen = false;
+
+function toggleChat(){
+  chatOpen = !chatOpen;
+  const panel = document.getElementById('chat-panel');
+  panel.style.display = chatOpen ? 'flex' : 'none';
+  if(chatOpen && document.getElementById('chat-msgs').children.length === 0){
+    addMsg('bot', 'Oi Gabi! 👋 Pode me dizer o que quer fazer:\n\n• "add tarefa reunião BRINTA sexta alta"\n• "compra shampoo e café"\n• "gastei R$50 no mercado Nubank"\n• "quanto gastei esse mês?"\n• "registra treino musculação 60min"');
+  }
+  if(chatOpen) setTimeout(()=>document.getElementById('chat-input').focus(), 100);
+}
+
+function addMsg(who, text){
+  const div = document.createElement('div');
+  const isUser = who === 'user';
+  div.style.maxWidth = '85%';
+  div.style.padding = '8px 12px';
+  div.style.borderRadius = isUser ? '12px 12px 2px 12px' : '12px 12px 12px 2px';
+  div.style.fontSize = '13px';
+  div.style.lineHeight = '1.5';
+  div.style.alignSelf = isUser ? 'flex-end' : 'flex-start';
+  div.style.background = isUser ? 'var(--gold)' : 'var(--surface2)';
+  div.style.color = isUser ? 'var(--surface2)' : 'var(--cream)';
+  div.style.whiteSpace = 'pre-wrap';
+  div.textContent = text;
+  document.getElementById('chat-msgs').appendChild(div);
+  document.getElementById('chat-msgs').scrollTop = document.getElementById('chat-msgs').scrollHeight;
+  return div;
+}
+
+async function sbA(table, method, body, filter){
+  let url = SBU2 + '/rest/v1/' + table + (filter ? '?' + filter : '');
+  const h = {apikey: SBK2, Authorization: 'Bearer ' + SBK2, 'Content-Type': 'application/json', Prefer: 'return=representation'};
+  const r = await fetch(url, {method, headers: h, body: body ? JSON.stringify(body) : undefined});
+  return r.json().catch(()=>({}));
+}
+
+async function sendChat(){
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if(!msg) return;
+  input.value = '';
+  addMsg('user', msg);
+  const typing = addMsg('bot', '...');
+  typing.id = 'typing-indicator';
+
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0,10);
+  const tmStr = today.toISOString().slice(0,7);
+  const tomorrowStr = new Date(today.getTime()+864e5).toISOString().slice(0,10);
+
+  const tasksRes = await sbA('tasks','GET',null,'select=text,cat,done&done=eq.false&limit=15');
+  const tasks = Array.isArray(tasksRes) ? tasksRes : [];
+  const gastosRes = await sbA('gastos','GET',null,'select=val,cur&data=gte.'+tmStr+'-01');
+  const gastos = Array.isArray(gastosRes) ? gastosRes : [];
+  const brlMes = gastos.filter(g=>g.cur==='BRL').reduce((s,g)=>s+Number(g.val),0);
+
+  const prompt = `Você é o assistente do app Zentra da Gabi. Responda em português ou espanhol conforme o usuário escrever.
+Hoje: ${todayStr}. Amanhã: ${tomorrowStr}.
+Tarefas pendentes: ${tasks.map(t=>t.text).join(', ')}.
+Gastos BRL este mês: R$${brlMes.toFixed(0)}.
+
+Quando o usuário pedir uma AÇÃO, responda APENAS com JSON (sem texto extra):
+- Adicionar tarefa: {"action":"add_task","text":"...","cat":"brinta|cliente|pessoal|estudo","prio":"alta|media|baixa","due":"YYYY-MM-DD ou null"}
+  Mapeamento de categorias: trabalho/produto/brinta/BRINTA → "brinta"; cliente → "cliente"; pessoal/vida/particular → "pessoal"; estudo/aula/curso → "estudo"
+  Se não especificar categoria e for algo de trabalho, use "brinta". Se for algo pessoal, use "pessoal".
+- Adicionar compras: {"action":"add_compras","items":["item1","item2"]}
+- Registrar gasto: {"action":"add_gasto","descricao":"...","val":50,"cur":"BRL","cat":"Alimentação","banco":"Nubank"}
+- Registrar treino: {"action":"add_treino","tipo":"musculacao","min":60}
+- Registrar peso: {"action":"add_peso","valor":"65.0"}
+Para perguntas ou conversa, responda normalmente em texto.
+
+Usuário: ${msg}`;
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GKEY},
+      body: JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],max_tokens:500,temperature:0.1})
+    });
+    const data = await res.json();
+    const reply = data?.choices?.[0]?.message?.content?.trim() || 'Não entendi, pode repetir?';
+    
+    document.getElementById('typing-indicator')?.remove();
+
+    let parsed = null;
+    try { parsed = JSON.parse(reply.replace(/```json|```/g,'').trim()); } catch(e) {}
+
+    function navTo(screen, tab){
+      const nb=document.querySelector('.nb.on');
+      const btn=document.querySelector(`.nb[onclick*="goTo('${screen}"]`);
+      if(btn&&btn!==nb) btn.click();
+      if(tab){setTimeout(()=>{const tb=document.querySelector(`#s-fin .fb[data-tab="${tab}"]`);if(tb)tb.click();},100);}
+      setTimeout(()=>{toggleChat();},400);
+    }
+    if(parsed?.action === 'add_task'){
+      await sbA('tasks','POST',{text:parsed.text,cat:parsed.cat||'pessoal',prio:parsed.prio||'media',due:parsed.due||null,done:false},null);
+      const isWork=parsed.cat==='brinta'||parsed.cat==='cliente';
+      addMsg('bot', '✅ Tarefa adicionada: "' + parsed.text + '" — indo para ' + (isWork?'Trabalho':'Pessoal') + '...');
+      setTimeout(()=>navTo(isWork?'work':'pessoal'),600);
+    } else if(parsed?.action === 'add_compras'){
+      await Promise.all(parsed.items.map(n=>sbA('compras','POST',{nome:n,qtd:1,done:false},null)));
+      addMsg('bot', '✅ Adicionado à lista: ' + parsed.items.join(', ') + ' — indo para Compras...');
+      setTimeout(()=>navTo('fin','comp'),600);
+    } else if(parsed?.action === 'add_gasto'){
+      await sbA('gastos','POST',{descricao:parsed.descricao,val:parsed.val,cur:parsed.cur||'BRL',cat:parsed.cat||'Outro',banco:parsed.banco||null,data:todayStr},null);
+      addMsg('bot', '✅ Gasto registrado: ' + parsed.descricao + ' ' + parsed.val + ' ' + (parsed.cur||'BRL') + ' — indo para Gastos...');
+      setTimeout(()=>navTo('fin','gastos'),600);
+    } else if(parsed?.action === 'add_treino'){
+      await sbA('registros','POST',{tipo:'academia',valor:parsed.tipo||'musculacao',notas:(parsed.min?parsed.min+'min':''),data:todayStr},null);
+      const acum=ls('zentra-acum',0);lss('zentra-acum',acum+1);
+      addMsg('bot', '✅ Treino registrado!' + (parsed.min?' '+parsed.min+'min':'') + ' — indo para Saúde...');
+      setTimeout(()=>navTo('saude'),600);
+    } else if(parsed?.action === 'add_peso'){
+      await sbA('registros','POST',{tipo:'peso',valor:parsed.valor,data:todayStr},null);
+      addMsg('bot', '✅ Peso: ' + parsed.valor + ' kg — indo para Saúde...');
+      setTimeout(()=>navTo('saude'),600);
+    } else {
+      addMsg('bot', reply);
+    }
+  } catch(e) {
+    document.getElementById('typing-indicator')?.remove();
+    addMsg('bot', '⚠️ Erro ao conectar. Tenta de novo!');
+    console.error(e);
+  }
+}
+// ===== FIM CHAT =====
+
+</script>
+</body>
 </html>
