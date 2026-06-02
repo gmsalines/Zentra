@@ -1,13 +1,5 @@
 {
-  "version": 2,
-  "framework": null,
-  "buildCommand": null,
-  "outputDirectory": null,
-  "installCommand": null,
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ]
+  "buildCommand": "mkdir -p dist && cp index.html dist/index.html",
+  "outputDirectory": "dist",
+  "installCommand": ""
 }
