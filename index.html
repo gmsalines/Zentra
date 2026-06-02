@@ -230,11 +230,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
       <button class="btn" onclick="addPs()">+ Adicionar</button>
     </div>
   </div>
-    <div id="hablist"></div>
-    <div class="ab">
-      <div class="rr"><input id="habinput" placeholder="Novo hábito..." style="flex:1"><button class="btn" style="width:80px" onclick="addHab()">+ Add</button></div>
-    </div>
-  </div>
   <div id="ps-metas" class="ss">
     <button class="back" onclick="psSub('main')">← Voltar</button>
     <div class="sl">Metas</div>
@@ -339,6 +334,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
     <div class="hcard" onclick="openS('sono')"><span class="hci">🌙</span><div class="hcn">Sono</div><div class="hcv" id="sv-sono">–</div></div>
     <div class="hcard" onclick="openS('agua')"><span class="hci">💧</span><div class="hcn">Água</div><div class="hcv" id="sv-agua">0/8</div></div>
     <div class="hcard" onclick="openS('meds')"><span class="hci">💊</span><div class="hcn">Medicamentos</div><div class="hcv" id="sv-meds">–</div></div>
+    <div class="hcard" onclick="openS('hab')"><span class="hci">✅</span><div class="hcn">Hábitos</div><div class="hcv" id="sv-hab">–</div></div>
     </div>
   </div>
   <div id="sd-peso" class="ss"><button class="back" onclick="closeS()">← Saúde</button>
@@ -440,9 +436,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
     </div>
   </div>
 </div>
-  </div>
-
-  <!-- HÁBITOS -->
   <div id="sd-hab" class="ss">
     <button class="back" onclick="closeS()">← Saúde</button>
     <div class="sl">Hábitos de hoje</div>
@@ -551,6 +544,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 
 <script>
 
+function $(id){return document.getElementById(id);}
 const SUPA_URL='https://raboikyezplxhxxropvf.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhYm9pa3llenBseGh4eHJvcHZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MTQyNjIsImV4cCI6MjA5NTA5MDI2Mn0.7IID_hKsYXge6PK7n2JX0F10dVDMtbLJ068mWkH6Kpw';
 const H={'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'};
@@ -903,7 +897,9 @@ async function renderGraf(){
 }
 
 // HÁBITOS
-function renderHab(){const h=ls('zentra-hab',[]),done=ls('zentra-hab-'+td(),[]);document.getElementById('hablist').innerHTML=h.length?h.map((x,i)=>'<div class="hr-row"><div class="hr-cb '+(done.includes(i)?'on':'')+'" onclick="togHab('+i+')">'+(done.includes(i)?'✓':'')+'</div><span style="flex:1;font-size:14px;color:var(--cream)">'+x+'</span><button class="xb" onclick="delHab('+i+')">×</button></div>').join(''):'<div class="empty">Nenhum hábito ainda</div>';}
+function renderHab(){const h=ls('zentra-hab',[]),done=ls('zentra-hab-'+td(),[]);
+  const svhab=document.getElementById('sv-hab');if(svhab)svhab.textContent=done.length+'/'+h.length;
+  document.getElementById('hablist').innerHTML=h.length?h.map((x,i)=>'<div class="hr-row"><div class="hr-cb '+(done.includes(i)?'on':'')+'" onclick="togHab('+i+')">'+(done.includes(i)?'✓':'')+'</div><span style="flex:1;font-size:14px;color:var(--cream)">'+x+'</span><button class="xb" onclick="delHab('+i+')">×</button></div>').join(''):'<div class="empty">Nenhum hábito ainda</div>';}
 function togHab(i){const done=ls('zentra-hab-'+td(),[]);const idx=done.indexOf(i);if(idx>=0)done.splice(idx,1);else done.push(i);lss('zentra-hab-'+td(),done);renderHab();}
 function delHab(i){const h=ls('zentra-hab',[]);h.splice(i,1);lss('zentra-hab',h);renderHab();}
 function addHab(){const t=document.getElementById('habinput').value.trim();if(!t)return;const h=ls('zentra-hab',[]);h.push(t);lss('zentra-hab',h);document.getElementById('habinput').value='';renderHab();}
@@ -1062,7 +1058,9 @@ Tarefas pendentes: ${tasks.map(t=>t.text).join(', ')}.
 Gastos BRL este mês: R$${brlMes.toFixed(0)}.
 
 Quando o usuário pedir uma AÇÃO, responda APENAS com JSON (sem texto extra):
-- Adicionar tarefa: {"action":"add_task","text":"...","cat":"brinta|pessoal|estudo","prio":"alta|media|baixa","due":"YYYY-MM-DD ou null"}
+- Adicionar tarefa: {"action":"add_task","text":"...","cat":"brinta|cliente|pessoal|estudo","prio":"alta|media|baixa","due":"YYYY-MM-DD ou null"}
+  Mapeamento de categorias: trabalho/produto/brinta/BRINTA → "brinta"; cliente → "cliente"; pessoal/vida/particular → "pessoal"; estudo/aula/curso → "estudo"
+  Se não especificar categoria e for algo de trabalho, use "brinta". Se for algo pessoal, use "pessoal".
 - Adicionar compras: {"action":"add_compras","items":["item1","item2"]}
 - Registrar gasto: {"action":"add_gasto","descricao":"...","val":50,"cur":"BRL","cat":"Alimentação","banco":"Nubank"}
 - Registrar treino: {"action":"add_treino","tipo":"musculacao","min":60}
