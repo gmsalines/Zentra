@@ -1083,24 +1083,35 @@ Usuário: ${msg}`;
     let parsed = null;
     try { parsed = JSON.parse(reply.replace(/```json|```/g,'').trim()); } catch(e) {}
 
+    function navTo(screen, tab){
+      const nb=document.querySelector('.nb.on');
+      const btn=document.querySelector(`.nb[onclick*="goTo('${screen}"]`);
+      if(btn&&btn!==nb) btn.click();
+      if(tab){setTimeout(()=>{const tb=document.querySelector(`#s-fin .fb[data-tab="${tab}"]`);if(tb)tb.click();},100);}
+      setTimeout(()=>{toggleChat();},400);
+    }
     if(parsed?.action === 'add_task'){
       await sbA('tasks','POST',{text:parsed.text,cat:parsed.cat||'pessoal',prio:parsed.prio||'media',due:parsed.due||null,done:false},null);
-      addMsg('bot', '✅ Tarefa adicionada: "' + parsed.text + '"');
-      render();
+      const isWork=parsed.cat==='brinta'||parsed.cat==='cliente';
+      addMsg('bot', '✅ Tarefa adicionada: "' + parsed.text + '" — indo para ' + (isWork?'Trabalho':'Pessoal') + '...');
+      setTimeout(()=>navTo(isWork?'work':'pessoal'),600);
     } else if(parsed?.action === 'add_compras'){
       await Promise.all(parsed.items.map(n=>sbA('compras','POST',{nome:n,qtd:1,done:false},null)));
-      addMsg('bot', '✅ Adicionado à lista: ' + parsed.items.join(', '));
+      addMsg('bot', '✅ Adicionado à lista: ' + parsed.items.join(', ') + ' — indo para Compras...');
+      setTimeout(()=>navTo('fin','comp'),600);
     } else if(parsed?.action === 'add_gasto'){
       await sbA('gastos','POST',{descricao:parsed.descricao,val:parsed.val,cur:parsed.cur||'BRL',cat:parsed.cat||'Outro',banco:parsed.banco||null,data:todayStr},null);
-      addMsg('bot', '✅ Gasto: ' + parsed.descricao + ' ' + parsed.val + ' ' + (parsed.cur||'BRL'));
-      if(typeof renderGastos === 'function') renderGastos();
+      addMsg('bot', '✅ Gasto registrado: ' + parsed.descricao + ' ' + parsed.val + ' ' + (parsed.cur||'BRL') + ' — indo para Gastos...');
+      setTimeout(()=>navTo('fin','gastos'),600);
     } else if(parsed?.action === 'add_treino'){
       await sbA('registros','POST',{tipo:'academia',valor:parsed.tipo||'musculacao',notas:(parsed.min?parsed.min+'min':''),data:todayStr},null);
       const acum=ls('zentra-acum',0);lss('zentra-acum',acum+1);
-      addMsg('bot', '✅ Treino registrado!' + (parsed.min?' '+parsed.min+'min':''));
+      addMsg('bot', '✅ Treino registrado!' + (parsed.min?' '+parsed.min+'min':'') + ' — indo para Saúde...');
+      setTimeout(()=>navTo('saude'),600);
     } else if(parsed?.action === 'add_peso'){
       await sbA('registros','POST',{tipo:'peso',valor:parsed.valor,data:todayStr},null);
-      addMsg('bot', '✅ Peso: ' + parsed.valor + ' kg');
+      addMsg('bot', '✅ Peso: ' + parsed.valor + ' kg — indo para Saúde...');
+      setTimeout(()=>navTo('saude'),600);
     } else {
       addMsg('bot', reply);
     }
