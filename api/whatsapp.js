@@ -1,4 +1,5 @@
 const SUPA = 'https://raboikyezplxhxxropvf.supabase.co';
+function H() { const k = process.env.SUPABASE_SERVICE_KEY; return { apikey: k, Authorization: 'Bearer ' + k, 'Content-Type': 'application/json' }; }
 function reply(res, msg) {
     const safe = String(msg).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     res.setHeader('Content-Type', 'text/xml');
@@ -8,28 +9,35 @@ function empty(res) {
     res.setHeader('Content-Type', 'text/xml');
     res.status(200).send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
 }
-// Grava no Supabase. Se o banco recusar, LANCA erro (nao finge sucesso).
 async function insert(table, row) {
-    const key = process.env.SUPABASE_SERVICE_KEY;
     row.user_id = process.env.ZENTRA_USER_ID;
-    const r = await fetch(SUPA + '/rest/v1/' + table, { method: 'POST', headers: { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify(row) });
+    const r = await fetch(SUPA + '/rest/v1/' + table, { method: 'POST', headers: Object.assign(H(), { Prefer: 'return=minimal' }), body: JSON.stringify(row) });
     if (!r.ok) { const t = await r.text(); throw new Error('DB ' + r.status + ': ' + t.slice(0, 140)); }
 }
-// Idempotencia: grava o MessageSid; se ja existe (409), e reenvio do Twilio -> ignora.
 async function alreadyProcessed(sid) {
     if (!sid) return false;
-    const key = process.env.SUPABASE_SERVICE_KEY;
-    try {
-        const r = await fetch(SUPA + '/rest/v1/wa_processed', { method: 'POST', headers: { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify({ message_sid: sid }) });
-        return r.status === 409;
-    } catch (e) { return false; }
+    try { const r = await fetch(SUPA + '/rest/v1/wa_processed', { method: 'POST', headers: Object.assign(H(), { Prefer: 'return=minimal' }), body: JSON.stringify({ message_sid: sid }) }); return r.status === 409; } catch (e) { return false; }
 }
-// Categorias validas do app. O app so mostra tarefas dessas; mapeia o resto.
+// Memoria curta: pergunta pendente por usuario (resolve a proxima mensagem).
+async function getPending(uid) {
+    try {
+        const r = await fetch(SUPA + '/rest/v1/wa_pending?user_id=eq.' + uid + '&select=item,created_at', { headers: H() });
+        const j = await r.json();
+        if (Array.isArray(j) && j.length) { if (Date.now() - new Date(j[0].created_at).getTime() < 900000) return j[0].item; }
+    } catch (e) {}
+    return null;
+}
+async function setPending(uid, item) {
+    try { await fetch(SUPA + '/rest/v1/wa_pending', { method: 'POST', headers: Object.assign(H(), { Prefer: 'resolution=merge-duplicates,return=minimal' }), body: JSON.stringify({ user_id: uid, item: item, created_at: new Date().toISOString() }) }); } catch (e) {}
+}
+async function clearPending(uid) {
+    try { await fetch(SUPA + '/rest/v1/wa_pending?user_id=eq.' + uid, { method: 'DELETE', headers: H() }); } catch (e) {}
+}
 function normCat(raw) {
     const valid = ['brinta', 'cliente', 'pessoal', 'estudo'];
     let c = String(raw || 'pessoal').toLowerCase().trim();
     if (valid.includes(c)) return c;
-    const map = { trabalho: 'brinta', work: 'brinta', empresa: 'brinta', clientes: 'cliente', compras: 'pessoal', mercado: 'pessoal', casa: 'pessoal', saude: 'pessoal', estudos: 'estudo', estudar: 'estudo', faculdade: 'estudo' };
+    const map = { trabalho: 'brinta', work: 'brinta', empresa: 'brinta', clientes: 'cliente', compras: 'pessoal', mercado: 'pessoal', casa: 'pessoal', familia: 'pessoal', saude: 'pessoal', estudos: 'estudo', estudar: 'estudo', faculdade: 'estudo', curso: 'estudo' };
     return map[c] || 'pessoal';
 }
 async function execAction(p) {
@@ -43,6 +51,7 @@ async function execAction(p) {
 export default async function handler(req, res) {
     if (req.method !== 'POST') { res.status(200).send('Zentra WhatsApp webhook ok'); return; }
     const b = req.body || {};
+    const uid = process.env.ZENTRA_USER_ID;
     const sid = b.MessageSid || b.SmsSid || b.SmsMessageSid || '';
     let text = (b.Body || '').trim();
     try {
@@ -60,16 +69,44 @@ export default async function handler(req, res) {
             text = (trd.text || '').trim();
         }
         if (!text) return reply(res, 'Nao consegui entender. Manda de novo?');
+
+        const pending = await getPending(uid);
         const today = new Date().toISOString().slice(0, 10);
-        const prompt = 'Voce e o assistente do app Zentra da Gabi. Hoje: ' + today + '. Quando o usuario pedir uma ACAO, responda APENAS com JSON (sem texto extra): - Tarefa: {"action":"add_task","text":"...","cat":"brinta|cliente|pessoal|estudo","prio":"alta|media|baixa","due":"YYYY-MM-DD ou null"} - Gasto: {"action":"add_gasto","descricao":"...","val":50,"cur":"BRL","cat":"Alimentacao","banco":"Nubank"} - Treino: {"action":"add_treino","tipo":"musculacao","min":60} - Peso: {"action":"add_peso","valor":"65.0"} REGRA DA CATEGORIA (cat) da tarefa: use EXATAMENTE uma destas quatro, nunca invente outra. brinta = trabalho/empresa Brinta e trabalho generico. cliente = quando mencionar um cliente especifico. pessoal = vida pessoal, compras, casa, mercado, familia. estudo = estudos, curso, faculdade. Se nao tiver certeza, use pessoal. Para perguntas/conversa, responda em texto normal. Usuario: ' + text;
+        const acoes = 'Acoes JSON: - Tarefa: {"action":"add_task","text":"...","cat":"brinta|cliente|pessoal|estudo","prio":"alta|media|baixa","due":"YYYY-MM-DD ou null"} - Gasto: {"action":"add_gasto","descricao":"...","val":50,"cur":"BRL","cat":"Alimentacao","banco":"Nubank"} - Treino: {"action":"add_treino","tipo":"musculacao","min":60} - Peso: {"action":"add_peso","valor":"65.0"}. Categoria (cat) da tarefa: use EXATAMENTE uma de brinta (trabalho/empresa Brinta e trabalho generico), cliente (cliente especifico), pessoal (vida pessoal, casa, mercado, familia), estudo (estudos/curso/faculdade); nunca invente outra; na duvida use pessoal.';
+        let prompt;
+        if (pending) {
+            prompt = 'Voce e o assistente do Zentra. Hoje: ' + today + '. O usuario tinha pedido para registrar: "' + pending + '". Agora ele respondeu: "' + text + '". Decida AGORA e responda APENAS com JSON: se ele indicou TAREFA/lembrete use add_task (com o texto do item pendente e a categoria que ele disser); se ele indicou GASTO/despesa COM um valor use add_gasto. NUNCA pergunte de novo, NUNCA retorne action ask. ' + acoes;
+        } else {
+            prompt = 'Voce e o assistente do Zentra da Gabi. Hoje: ' + today + '. Quando o usuario pedir uma ACAO, responda APENAS com JSON (sem texto extra). ' + acoes + ' REGRA IMPORTANTE: se a mensagem for AMBIGUA entre tarefa e gasto (ex.: "pagar X", "pagamento da escola") e NAO tiver um valor em dinheiro, NAO crie nada: responda {"action":"ask","item":"DESCRICAO CURTA"}. Se tiver valor, registre add_gasto. Para perguntas/conversa, responda em texto normal. Usuario: ' + text;
+        }
+
         const lr = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + process.env.GROQ_API_KEY }, body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: prompt }], max_tokens: 300, temperature: 0.1 }) });
         const ld = await lr.json();
         let content = (ld && ld.choices && ld.choices[0] && ld.choices[0].message && ld.choices[0].message.content || '').trim();
         let parsed = null;
         try { parsed = JSON.parse(content.replace(/```json|```/g, '').trim()); } catch (e) {}
-        if (parsed && parsed.action) {
+
+        // Pergunta ambigua: guarda e pergunta (so quando nao estamos resolvendo um pendente).
+        if (parsed && parsed.action === 'ask' && !pending) {
+            const item = parsed.item || text;
+            await setPending(uid, item);
+            return reply(res, '"' + item + '" e uma tarefa (lembrete) ou um gasto? Responda ex.: "tarefa pessoal" ou "gasto 300".');
+        }
+        // Guard: gasto sem valor valido vira pergunta.
+        if (parsed && parsed.action === 'add_gasto' && (!parsed.val || Number(parsed.val) <= 0) && !pending) {
+            await setPending(uid, parsed.descricao || text);
+            return reply(res, '"' + (parsed.descricao || text) + '" e uma tarefa (lembrete) ou um gasto? Se for gasto, me diz o valor. Ex.: "tarefa pessoal" ou "gasto 300".');
+        }
+        if (parsed && parsed.action && parsed.action !== 'ask') {
+            if (pending) await clearPending(uid);
             const msg = await execAction(parsed);
             return reply(res, msg + (numMedia > 0 ? ' (audio: ' + text + ')' : ''));
+        }
+        // Resolvendo pendente mas modelo nao decidiu -> cai pra tarefa pessoal por seguranca.
+        if (pending) {
+            await clearPending(uid);
+            const msg = await execAction({ action: 'add_task', text: pending, cat: normCat(text) });
+            return reply(res, msg);
         }
         return reply(res, content || ('Recebi: ' + text));
     } catch (e) {
