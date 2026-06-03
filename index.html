@@ -992,7 +992,7 @@ renderHome();
 
 
 // ===== ZENTRA CHAT =====
-const GKEY = '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';
+const GKEY = '';
 const SBU2 = 'https://raboikyezplxhxxropvf.supabase.co';
 const SBK2 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhYm9pa3llenBseGh4eHJvcHZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MTQyNjIsImV4cCI6MjA5NTA5MDI2Mn0.7IID_hKsYXge6PK7n2JX0F10dVDMtbLJ068mWkH6Kpw';
 let chatOpen = false;
@@ -1070,10 +1070,10 @@ Para perguntas ou conversa, responda normalmente em texto.
 Usuário: ${msg}`;
 
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GKEY},
-      body: JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],max_tokens:500,temperature:0.1})
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({prompt})
     });
     const data = await res.json();
     const reply = data?.choices?.[0]?.message?.content?.trim() || 'Não entendi, pode repetir?';
