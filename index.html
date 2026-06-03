@@ -1112,7 +1112,8 @@ function zPickNew(e){zNewIcon=e;buildAreasUI();}
 function setAreaIcon(id,e){var a=zAreas();a.forEach(function(x){if(x.id===id)x.icon=e;});zSaveAreas(a);buildAreas();buildAreasUI();}
 function addArea(){var name=(document.getElementById('z-newarea-name').value||'').trim();if(!name)return;var a=zAreas();a.push({id:'a'+Date.now(),name:name,icon:zNewIcon});zSaveAreas(a);zNewIcon='📌';buildAreas();buildAreasUI();}
 function delAreaC(id){var a=zAreas().filter(function(x){return x.id!==id;});zSaveAreas(a);localStorage.removeItem('z-area-'+id);buildAreas();buildAreasUI();}
-function buildAreasUI(){var a=zAreas();var h='';a.forEach(function(x){h+='<div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)"><div class="z-tog"><span>'+x.icon+' '+x.name+'</span><button class="z-mini" onclick="delAreaC(\''+x.id+'\')">×</button></div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">';ZAREAICONS.forEach(function(e){h+='<button class="z-mini'+(x.icon===e?' z-on':'')+'" onclick="setAreaIcon(\''+x.id+'\',\''+e+'\')">'+e+'</button>';});h+='</div></div>';});h+='<div class="z-sec-t" style="margin-top:4px">Nova área</div><input id="z-newarea-name" placeholder="Nome da área" style="width:100%;padding:6px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit;margin-bottom:6px"><div style="font-size:11px;color:var(--text2);margin-bottom:4px">Ícone</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">';ZAREAICONS.forEach(function(e){h+='<button class="z-mini'+(zNewIcon===e?' z-on':'')+'" onclick="zPickNew(\''+e+'\')">'+e+'</button>';});h+='</div><button class="z-mini" style="width:100%;color:var(--gold);border-color:var(--gold)" onclick="addArea()">+ Adicionar área</button>';var el=document.getElementById('z-areas-ui');if(el)el.innerHTML=h;}
+function renameArea(id,val){var v=(val||'').trim();if(!v)return;var a=zAreas();a.forEach(function(x){if(x.id===id)x.name=v;});zSaveAreas(a);buildAreas();}
+function buildAreasUI(){var a=zAreas();var h='';a.forEach(function(x){h+='<div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)"><div class="z-tog"><span style="font-size:18px;margin-right:4px">'+x.icon+'</span><input value="'+String(x.name).replace(/"/g,'&quot;')+'" onchange="renameArea(\''+x.id+'\',this.value)" style="flex:1;min-width:0;padding:4px 6px;border:1px solid var(--border2);border-radius:6px;background:var(--surface2);color:var(--cream);font-family:inherit;font-size:13px"><button class="z-mini" onclick="delAreaC(\''+x.id+'\')">×</button></div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">';ZAREAICONS.forEach(function(e){h+='<button class="z-mini'+(x.icon===e?' z-on':'')+'" onclick="setAreaIcon(\''+x.id+'\',\''+e+'\')">'+e+'</button>';});h+='</div></div>';});h+='<div class="z-sec-t" style="margin-top:4px">Nova área</div><input id="z-newarea-name" placeholder="Nome da área" style="width:100%;padding:6px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit;margin-bottom:6px"><div style="font-size:11px;color:var(--text2);margin-bottom:4px">Ícone</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">';ZAREAICONS.forEach(function(e){h+='<button class="z-mini'+(zNewIcon===e?' z-on':'')+'" onclick="zPickNew(\''+e+'\')">'+e+'</button>';});h+='</div><button class="z-mini" style="width:100%;color:var(--gold);border-color:var(--gold)" onclick="addArea()">+ Adicionar área</button>';var el=document.getElementById('z-areas-ui');if(el)el.innerHTML=h;}
 
 function zApplyDesign(){
  setTheme(localStorage.getItem('z-theme')||'meianoite');
@@ -1162,6 +1163,7 @@ async function sbA(table, method, body, filter){
   return r.json().catch(()=>({}));
 }
 
+let zChatPending=null;
 async function sendChat(){
   const input = document.getElementById('chat-input');
   const msg = input.value.trim();
@@ -1182,22 +1184,29 @@ async function sendChat(){
   const gastos = Array.isArray(gastosRes) ? gastosRes : [];
   const brlMes = gastos.filter(g=>g.cur==='BRL').reduce((s,g)=>s+Number(g.val),0);
 
-  const prompt = `Você é o assistente do app Zentra da Gabi. Responda em português ou espanhol conforme o usuário escrever.
-Hoje: ${todayStr}. Amanhã: ${tomorrowStr}.
-Tarefas pendentes: ${tasks.map(t=>t.text).join(', ')}.
-Gastos BRL este mês: R$${brlMes.toFixed(0)}.
-
-Quando o usuário pedir uma AÇÃO, responda APENAS com JSON (sem texto extra):
-- Adicionar tarefa: {"action":"add_task","text":"...","cat":"brinta|cliente|pessoal|estudo","prio":"alta|media|baixa","due":"YYYY-MM-DD ou null"}
-  Mapeamento de categorias: trabalho/produto/brinta/BRINTA → "brinta"; cliente → "cliente"; pessoal/vida/particular → "pessoal"; estudo/aula/curso → "estudo"
-  Se não especificar categoria e for algo de trabalho, use "brinta". Se for algo pessoal, use "pessoal".
+  const pend = zChatPending; zChatPending = null;
+  const acoes = `- Adicionar tarefa: {"action":"add_task","text":"...","cat":"brinta|cliente|pessoal|estudo","prio":"alta|media|baixa","due":"YYYY-MM-DD ou null"} (categorias: trabalho/produto/brinta -> brinta; cliente -> cliente; pessoal/vida/casa/mercado -> pessoal; estudo/aula/curso -> estudo; na duvida pessoal)
 - Adicionar compras: {"action":"add_compras","items":["item1","item2"]}
-- Registrar gasto: {"action":"add_gasto","descricao":"...","val":50,"cur":"BRL","cat":"Alimentação","banco":"Nubank"}
+- Registrar gasto: {"action":"add_gasto","descricao":"...","val":50,"cur":"BRL","cat":"Alimentacao","banco":"Nubank"}
 - Registrar treino: {"action":"add_treino","tipo":"musculacao","min":60}
-- Registrar peso: {"action":"add_peso","valor":"65.0"}
+- Registrar peso: {"action":"add_peso","valor":"65.0"}`;
+  let prompt;
+  if(pend){
+    prompt = `Voce e o assistente do Zentra. Hoje: ${todayStr}. O usuario tinha pedido para registrar: "${pend}". Agora ele respondeu: "${msg}". Decida AGORA e responda APENAS com JSON: se indicou TAREFA/lembrete use add_task (com o texto do item pendente e a categoria que ele disser); se indicou GASTO/despesa COM um valor use add_gasto. NUNCA pergunte de novo, NUNCA retorne action ask.
+${acoes}`;
+  } else {
+    prompt = `Voce e o assistente do app Zentra da Gabi. Responda em portugues ou espanhol conforme o usuario escrever.
+Hoje: ${todayStr}. Amanha: ${tomorrowStr}.
+Tarefas pendentes: ${tasks.map(t=>t.text).join(', ')}.
+Gastos BRL este mes: R$${brlMes.toFixed(0)}.
+
+Quando o usuario pedir uma ACAO, responda APENAS com JSON (sem texto extra):
+${acoes}
+REGRA: se a mensagem for AMBIGUA entre tarefa e gasto (ex.: "pagar X", "pagamento da escola") e NAO tiver um valor em dinheiro, NAO crie nada: responda {"action":"ask","item":"DESCRICAO CURTA"}. Se tiver valor, registre add_gasto.
 Para perguntas ou conversa, responda normalmente em texto.
 
-Usuário: ${msg}`;
+Usuario: ${msg}`;
+  }
 
   try {
     const res = await fetch('/api/chat', {
@@ -1219,6 +1228,16 @@ Usuário: ${msg}`;
       if(btn&&btn!==nb) btn.click();
       if(tab){setTimeout(()=>{const tb=document.querySelector(`#s-fin .fb[data-tab="${tab}"]`);if(tb)tb.click();},100);}
       setTimeout(()=>{toggleChat();},400);
+    }
+    if(parsed?.action === 'ask' && !pend){
+      zChatPending = parsed.item || msg;
+      addMsg('bot', '"' + (parsed.item||msg) + '" e uma tarefa (lembrete) ou um gasto? Responda ex.: "tarefa pessoal" ou "gasto 300".');
+      return;
+    }
+    if(parsed?.action === 'add_gasto' && (!parsed.val || Number(parsed.val) <= 0) && !pend){
+      zChatPending = parsed.descricao || msg;
+      addMsg('bot', '"' + (parsed.descricao||msg) + '" e uma tarefa (lembrete) ou um gasto? Se for gasto, me diz o valor. Ex.: "tarefa pessoal" ou "gasto 300".');
+      return;
     }
     if(parsed?.action === 'add_task'){
       await sbA('tasks','POST',{text:parsed.text,cat:parsed.cat||'pessoal',prio:parsed.prio||'media',due:parsed.due||null,done:false},null);
