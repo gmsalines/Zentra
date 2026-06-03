@@ -92,6 +92,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
+<div id="z-login" style="display:none;position:fixed;inset:0;background:#0A0E1A;z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:2rem;">
+  <div style="font-family:Georgia,serif;font-size:30px;color:#E8EEF8;margin-bottom:2px">Zentra</div>
+  <div style="font-size:13px;color:#7A9CC8;margin-bottom:1.5rem">Your missing wand.</div>
+  <input id="z-email" type="email" placeholder="Email" autocomplete="username" style="width:100%;max-width:300px;padding:12px;margin-bottom:10px;border:1px solid #1E2A40;border-radius:10px;background:#04080F;color:#E8EEF8;font-size:15px;outline:none">
+  <input id="z-pass" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')zLogin()" style="width:100%;max-width:300px;padding:12px;margin-bottom:10px;border:1px solid #1E2A40;border-radius:10px;background:#04080F;color:#E8EEF8;font-size:15px;outline:none">
+  <button onclick="zLogin()" style="width:100%;max-width:300px;padding:12px;border:none;border-radius:10px;background:#6A8FD4;color:#04080F;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">Entrar</button>
+  <div id="z-err" style="color:#E87070;font-size:13px;margin-top:10px;min-height:18px"></div>
+</div>
+
 
 <div id="app">
 <!-- HOME -->
@@ -993,6 +1002,38 @@ renderHome();
 
 // ===== ZENTRA CHAT =====
 const GKEY = '';
+
+// ===== ZENTRA LOGIN =====
+async function zLogin(){
+  const email=document.getElementById('z-email').value.trim();
+  const pass=document.getElementById('z-pass').value;
+  const err=document.getElementById('z-err'); err.textContent='Entrando...';
+  try{
+    const r=await fetch(SUPA_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'apikey':SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const d=await r.json();
+    if(d.access_token){
+      H['Authorization']='Bearer '+d.access_token;
+      if(d.refresh_token) localStorage.setItem('z-refresh',d.refresh_token);
+      document.getElementById('z-login').style.display='none';
+      err.textContent=''; renderHome();
+    } else { err.textContent='Email ou senha incorretos.'; }
+  }catch(e){ err.textContent='Erro ao conectar.'; }
+}
+function zLogout(){ localStorage.removeItem('z-refresh'); location.reload(); }
+async function zInit(){
+  const rt=localStorage.getItem('z-refresh');
+  if(rt){
+    try{
+      const r=await fetch(SUPA_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:rt})});
+      const d=await r.json();
+      if(d.access_token){ H['Authorization']='Bearer '+d.access_token; if(d.refresh_token) localStorage.setItem('z-refresh',d.refresh_token); renderHome(); return; }
+    }catch(e){}
+    localStorage.removeItem('z-refresh');
+  }
+  document.getElementById('z-login').style.display='flex';
+}
+zInit();
+
 const SBU2 = 'https://raboikyezplxhxxropvf.supabase.co';
 const SBK2 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhYm9pa3llenBseGh4eHJvcHZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MTQyNjIsImV4cCI6MjA5NTA5MDI2Mn0.7IID_hKsYXge6PK7n2JX0F10dVDMtbLJ068mWkH6Kpw';
 let chatOpen = false;
@@ -1027,7 +1068,7 @@ function addMsg(who, text){
 
 async function sbA(table, method, body, filter){
   let url = SBU2 + '/rest/v1/' + table + (filter ? '?' + filter : '');
-  const h = {apikey: SBK2, Authorization: 'Bearer ' + SBK2, 'Content-Type': 'application/json', Prefer: 'return=representation'};
+  const h = {apikey: SBK2, Authorization: H['Authorization'], 'Content-Type': 'application/json', Prefer: 'return=representation'};
   const r = await fetch(url, {method, headers: h, body: body ? JSON.stringify(body) : undefined});
   return r.json().catch(()=>({}));
 }
