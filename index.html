@@ -97,26 +97,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 .z-lang-btn.z-on{background:var(--gold);color:var(--surface2);border-color:var(--gold)}
 .z-theme-btn{width:34px;height:34px;border-radius:50%;border:2px solid transparent;cursor:pointer}
 .z-theme-btn.z-on{border-color:var(--cream)}
+.z-mini{padding:5px 9px;border:1px solid var(--border2);border-radius:8px;background:transparent;color:var(--cream);cursor:pointer;font-size:15px;line-height:1.2;font-family:inherit}
+.z-mini.z-on{border-color:var(--gold);background:rgba(255,255,255,.07)}
+.z-sec-t{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.z-tog{display:flex;align-items:center;justify-content:space-between;padding:3px 0;font-size:13px;color:var(--cream)}
 </style>
 <button id="z-gear" onclick="zToggleSettings()" style="position:fixed;bottom:82px;left:16px;width:50px;height:50px;border-radius:50%;background:var(--surface);border:1px solid var(--border2);cursor:pointer;font-size:21px;z-index:150;color:var(--gold);box-shadow:0 4px 16px rgba(0,0,0,.4)">&#9881;</button>
-<div id="z-settings" style="display:none;position:fixed;bottom:142px;left:16px;width:230px;background:var(--surface);border:1px solid var(--border2);border-radius:16px;z-index:151;flex-direction:column;gap:14px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.5)">
-  <div>
-    <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Idioma</div>
-    <div style="display:flex;gap:6px">
-      <button class="z-lang-btn z-on" data-l="pt" onclick="setLang('pt')">PT</button>
-      <button class="z-lang-btn" data-l="es" onclick="setLang('es')">ES</button>
-      <button class="z-lang-btn" data-l="en" onclick="setLang('en')">EN</button>
-    </div>
-  </div>
-  <div>
-    <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Tema</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <button class="z-theme-btn z-on" data-t="meianoite" onclick="setTheme('meianoite')" title="Meia-noite" style="background:linear-gradient(135deg,#0A0E1A,#6A8FD4)"></button>
-      <button class="z-theme-btn" data-t="rose" onclick="setTheme('rose')" title="Rose" style="background:linear-gradient(135deg,#160E14,#E0A9B0)"></button>
-      <button class="z-theme-btn" data-t="lavanda" onclick="setTheme('lavanda')" title="Lavanda" style="background:linear-gradient(135deg,#120F1E,#B19CE8)"></button>
-      <button class="z-theme-btn" data-t="esmeralda" onclick="setTheme('esmeralda')" title="Esmeralda" style="background:linear-gradient(135deg,#0A1410,#C9A86A)"></button>
-    </div>
-  </div>
+<div id="z-settings" style="display:none;position:fixed;bottom:142px;left:16px;width:250px;max-height:72vh;overflow-y:auto;background:var(--surface);border:1px solid var(--border2);border-radius:16px;z-index:151;flex-direction:column;gap:16px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.5)">
+  <div><div class="z-sec-t">Idioma</div><div style="display:flex;gap:6px"><button class="z-lang-btn z-on" data-l="pt" onclick="setLang('pt')">PT</button><button class="z-lang-btn" data-l="es" onclick="setLang('es')">ES</button><button class="z-lang-btn" data-l="en" onclick="setLang('en')">EN</button></div></div>
+  <div><div class="z-sec-t">Tema</div><div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button class="z-theme-btn z-on" data-t="meianoite" onclick="setTheme('meianoite')" title="Meia-noite" style="background:linear-gradient(135deg,#0A0E1A,#6A8FD4)"></button>
+    <button class="z-theme-btn" data-t="rose" onclick="setTheme('rose')" title="Rose" style="background:linear-gradient(135deg,#160E14,#E0A9B0)"></button>
+    <button class="z-theme-btn" data-t="lavanda" onclick="setTheme('lavanda')" title="Lavanda" style="background:linear-gradient(135deg,#120F1E,#B19CE8)"></button>
+    <button class="z-theme-btn" data-t="esmeralda" onclick="setTheme('esmeralda')" title="Esmeralda" style="background:linear-gradient(135deg,#0A1410,#C9A86A)"></button>
+  </div></div>
+  <div><div class="z-sec-t">Cor de destaque</div><input type="color" id="z-accent" onchange="setAccent(this.value)" style="width:100%;height:30px;border:1px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer"></div>
+  <div><div class="z-sec-t">Abas</div><div id="z-tabs-ui"></div></div>
+  <div><div class="z-sec-t">Ícones</div><div id="z-icons-ui"></div></div>
   <button onclick="zLogout()" style="background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--text2);padding:8px;cursor:pointer;font-size:12px;font-family:inherit">Sair</button>
 </div>
 
@@ -1063,7 +1060,7 @@ async function zInit(){
 zInit();
 
 
-// ===== ZENTRA DESIGN (idioma + temas) =====
+// ===== ZENTRA DESIGN v2 (idioma + cores + icones + abas) =====
 const ZDICT={
  'Início':{es:'Inicio',en:'Home'},'Trabalho':{es:'Trabajo',en:'Work'},'Pessoal':{es:'Personal',en:'Personal'},
  'Finanças':{es:'Finanzas',en:'Finances'},'Saúde':{es:'Salud',en:'Health'},'Urgentes':{es:'Urgentes',en:'Urgent'},
@@ -1075,10 +1072,11 @@ const ZDICT={
  'Orçamento':{es:'Presupuesto',en:'Budget'},'Compras':{es:'Compras',en:'Shopping'},'Dívidas':{es:'Deudas',en:'Debts'},
  'Peso':{es:'Peso',en:'Weight'},'Treino':{es:'Entreno',en:'Workout'},'Alimentação':{es:'Alimentación',en:'Nutrition'},
  'Sono':{es:'Sueño',en:'Sleep'},'Água':{es:'Agua',en:'Water'},'Medicamentos':{es:'Medicamentos',en:'Medications'},
- 'Hábitos':{es:'Hábitos',en:'Habits'},'Idioma':{es:'Idioma',en:'Language'},'Tema':{es:'Tema',en:'Theme'},'Sair':{es:'Salir',en:'Log out'}
+ 'Hábitos':{es:'Hábitos',en:'Habits'},'Idioma':{es:'Idioma',en:'Language'},'Tema':{es:'Tema',en:'Theme'},'Sair':{es:'Salir',en:'Log out'},
+ 'Abas':{es:'Pestañas',en:'Tabs'},'Ícones':{es:'Iconos',en:'Icons'},'Cor de destaque':{es:'Color de acento',en:'Accent color'}
 };
 let ZNODES=null;
-function zSnap(){ZNODES=[];const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null);let n;while(n=w.nextNode()){const t=n.textContent.trim();if(t&&ZDICT[t])ZNODES.push([n,t]);}}
+function zSnap(){ZNODES=[];var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null);var n;while(n=w.nextNode()){var t=n.textContent.trim();if(t&&ZDICT[t])ZNODES.push([n,t]);}}
 function setLang(l){localStorage.setItem('z-lang',l);if(!ZNODES)zSnap();ZNODES.forEach(function(p){p[0].textContent=(l==='pt'?p[1]:(ZDICT[p[1]][l]||p[1]));});document.querySelectorAll('.z-lang-btn').forEach(function(b){b.classList.toggle('z-on',b.dataset.l===l);});}
 const ZTHEMES={
  meianoite:{bg:'#0A0E1A',surface:'#060A12',surface2:'#04080F',gold:'#6A8FD4',gold2:'#A8C4F0',cream:'#E8EEF8',cream2:'#A0B4D8',moss:'#7AB8E8',terra:'#E87AB8',red:'#E87070',border:'#141C2E',border2:'#1E2A40',text:'#E8EEF8',text2:'#7A9CC8',text3:'#3A5A8A'},
@@ -1086,9 +1084,24 @@ const ZTHEMES={
  lavanda:{bg:'#120F1E',surface:'#1A1530',surface2:'#0E0B18',gold:'#B19CE8',gold2:'#D0C0F5',cream:'#EFEAF8',cream2:'#BCB0D8',moss:'#9AB8E8',terra:'#E0A0D8',red:'#E87070',border:'#221C3A',border2:'#322A50',text:'#EFEAF8',text2:'#9C90C8',text3:'#5A4A8A'},
  esmeralda:{bg:'#0A1410',surface:'#0E1C16',surface2:'#08100C',gold:'#C9A86A',gold2:'#E8D0A0',cream:'#EAF5EE',cream2:'#A8C8B4',moss:'#7AD8A0',terra:'#E8B07A',red:'#E87070',border:'#142A1E',border2:'#1E3A2A',text:'#EAF5EE',text2:'#80A890',text3:'#3A5A48'}
 };
-function setTheme(name){var t=ZTHEMES[name]||ZTHEMES.meianoite;localStorage.setItem('z-theme',name);var r=document.documentElement.style;for(var k in t){r.setProperty('--'+k,t[k]);}document.querySelectorAll('.z-theme-btn').forEach(function(b){b.classList.toggle('z-on',b.dataset.t===name);});}
+function setTheme(name){var t=ZTHEMES[name]||ZTHEMES.meianoite;localStorage.setItem('z-theme',name);localStorage.removeItem('z-accent');var r=document.documentElement.style;for(var k in t){r.setProperty('--'+k,t[k]);}document.querySelectorAll('.z-theme-btn').forEach(function(b){b.classList.toggle('z-on',b.dataset.t===name);});}
+function setAccent(c){localStorage.setItem('z-accent',c);var r=document.documentElement.style;r.setProperty('--gold',c);r.setProperty('--gold2',c);}
+const ZTABS=[['home','Início'],['work','Trabalho'],['pessoal','Pessoal'],['fin','Finanças'],['saude','Saúde']];
+const ZICONOPTS={home:['🕛','🏠','⭐','🌙','✨'],work:['🎠','💼','📋','💻','🎯'],pessoal:['👠','💖','🌸','🦋','👑'],fin:['👛','💰','💳','🪙','💎'],saude:['✨','💊','🌿','🧘','💪']};
+function zNavBtn(k){return document.querySelector('.bnav .nb[onclick*="goTo(\''+k+'\'"]');}
+function setTab(k,show){var b=zNavBtn(k);if(b)b.style.display=show?'':'none';var t=JSON.parse(localStorage.getItem('z-tabs')||'{}');t[k]=show;localStorage.setItem('z-tabs',JSON.stringify(t));buildTabsUI();}
+function setIcon(k,e){var b=zNavBtn(k);if(b){var s=b.querySelector('span');if(s)s.textContent=e;}var ic=JSON.parse(localStorage.getItem('z-icons')||'{}');ic[k]=e;localStorage.setItem('z-icons',JSON.stringify(ic));buildIconsUI();}
+function buildTabsUI(){var t=JSON.parse(localStorage.getItem('z-tabs')||'{}');var h='';ZTABS.forEach(function(p){var on=t[p[0]]!==false;h+='<div class="z-tog"><span>'+p[1]+'</span><button class="z-mini'+(on?' z-on':'')+'" onclick="setTab(\''+p[0]+'\','+(!on)+')">'+(on?'✓':'✗')+'</button></div>';});var el=document.getElementById('z-tabs-ui');if(el)el.innerHTML=h;}
+function buildIconsUI(){var ic=JSON.parse(localStorage.getItem('z-icons')||'{}');var h='';ZTABS.forEach(function(p){var cur=ic[p[0]];h+='<div style="margin-bottom:8px"><div style="font-size:12px;color:var(--text2);margin-bottom:4px">'+p[1]+'</div><div style="display:flex;gap:5px;flex-wrap:wrap">';ZICONOPTS[p[0]].forEach(function(e){h+='<button class="z-mini'+(cur===e?' z-on':'')+'" onclick="setIcon(\''+p[0]+'\',\''+e+'\')">'+e+'</button>';});h+='</div></div>';});var el=document.getElementById('z-icons-ui');if(el)el.innerHTML=h;}
 function zToggleSettings(){var p=document.getElementById('z-settings');p.style.display=p.style.display==='flex'?'none':'flex';}
-function zApplyDesign(){setTheme(localStorage.getItem('z-theme')||'meianoite');setLang(localStorage.getItem('z-lang')||'pt');}
+function zApplyDesign(){
+ setTheme(localStorage.getItem('z-theme')||'meianoite');
+ var ac=localStorage.getItem('z-accent');if(ac){setAccent(ac);var ai=document.getElementById('z-accent');if(ai)ai.value=ac;}
+ var tb=JSON.parse(localStorage.getItem('z-tabs')||'{}');ZTABS.forEach(function(p){if(tb[p[0]]===false){var b=zNavBtn(p[0]);if(b)b.style.display='none';}});
+ var ic=JSON.parse(localStorage.getItem('z-icons')||'{}');for(var k in ic){var b=zNavBtn(k);if(b){var s=b.querySelector('span');if(s)s.textContent=ic[k];}}
+ buildTabsUI();buildIconsUI();
+ setLang(localStorage.getItem('z-lang')||'pt');
+}
 zApplyDesign();
 const SBU2 = 'https://raboikyezplxhxxropvf.supabase.co';
 const SBK2 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhYm9pa3llenBseGh4eHJvcHZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MTQyNjIsImV4cCI6MjA5NTA5MDI2Mn0.7IID_hKsYXge6PK7n2JX0F10dVDMtbLJ068mWkH6Kpw';
