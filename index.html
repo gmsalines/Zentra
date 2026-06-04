@@ -128,6 +128,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
   <input id="z-email" type="email" placeholder="Email" autocomplete="username" style="width:100%;max-width:300px;padding:12px;margin-bottom:10px;border:1px solid #1E2A40;border-radius:10px;background:#04080F;color:#E8EEF8;font-size:15px;outline:none">
   <input id="z-pass" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')zLogin()" style="width:100%;max-width:300px;padding:12px;margin-bottom:10px;border:1px solid #1E2A40;border-radius:10px;background:#04080F;color:#E8EEF8;font-size:15px;outline:none">
   <button onclick="zLogin()" style="width:100%;max-width:300px;padding:12px;border:none;border-radius:10px;background:#6A8FD4;color:#04080F;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">Entrar</button>
+  <button onclick="zSignup()" style="width:100%;max-width:300px;padding:11px;margin-top:9px;border:1px solid #6A8FD4;border-radius:10px;background:transparent;color:#6A8FD4;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Criar conta</button>
   <div id="z-err" style="color:#E87070;font-size:13px;margin-top:10px;min-height:18px"></div>
 </div>
 
@@ -1188,8 +1189,32 @@ async function zLogin(){
       H['Authorization']='Bearer '+d.access_token;
       if(d.refresh_token) localStorage.setItem('z-refresh',d.refresh_token);
       document.getElementById('z-login').style.display='none';
+      try{localStorage.setItem('z-name',email.split('@')[0]);var _hg=document.getElementById('hgreet');if(_hg)_hg.textContent=email.split('@')[0];}catch(e){}
       err.textContent=''; renderHome();
     } else { err.textContent='Email ou senha incorretos.'; }
+  }catch(e){ err.textContent='Erro ao conectar.'; }
+}
+async function zSignup(){
+  const email=document.getElementById('z-email').value.trim();
+  const pass=document.getElementById('z-pass').value;
+  const err=document.getElementById('z-err');
+  if(!email||!email.includes('@')){err.textContent='Digite um email válido.';return;}
+  if(pass.length<6){err.textContent='A senha precisa de 6+ caracteres.';return;}
+  err.textContent='Criando conta...';
+  try{
+    const r=await fetch(SUPA_URL+'/auth/v1/signup',{method:'POST',headers:{'apikey':SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const d=await r.json();
+    if(d.access_token){
+      H['Authorization']='Bearer '+d.access_token;
+      if(d.refresh_token) localStorage.setItem('z-refresh',d.refresh_token);
+      try{localStorage.setItem('z-name',email.split('@')[0]);var _hg=document.getElementById('hgreet');if(_hg)_hg.textContent=email.split('@')[0];}catch(e){}
+      document.getElementById('z-login').style.display='none';
+      err.textContent=''; renderHome();
+    } else if(d.user||d.id){
+      err.textContent='Conta criada! Agora toque em Entrar com o mesmo email e senha.';
+    } else {
+      err.textContent=(d.msg||d.error_description||d.error||'Não consegui criar a conta. Esse email já existe?');
+    }
   }catch(e){ err.textContent='Erro ao conectar.'; }
 }
 function zLogout(){ localStorage.removeItem('z-refresh'); location.reload(); }
@@ -1206,6 +1231,7 @@ async function zInit(){
   document.getElementById('z-login').style.display='flex';
 }
 zInit();
+try{var _zn=localStorage.getItem('z-name');if(_zn){var _hg2=document.getElementById('hgreet');if(_hg2)_hg2.textContent=_zn;}}catch(e){}
 
 
 // ===== ZENTRA DESIGN v2 (idioma + cores + icones + abas) =====
