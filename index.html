@@ -1245,29 +1245,82 @@ function zToggleSettings(){var p=document.getElementById('z-settings');p.style.d
 // ===== AREAS PERSONALIZADAS =====
 var zNewIcon='📌';
 var ZAREAICONS=['📌','✈️','🏖️','🗺️','🎓','📖','📚','✏️','🏋️','🏃','🧘','🍳','🥗','🍔','☕','🛒','🐶','🐱','🌱','🌸','🌍','🎵','🎸','🎨','🎬','🎮','🏡','💼','💻','📊','📅','✅','📝','❤️','⚽','🏀','💊','🩺','🧳','📷','🎁','🌟','🔥','💰','💳','👑','🦋','🚗','💡','🛠️'];
-function zAreas(){return JSON.parse(localStorage.getItem('z-areas')||'[]');}
-function zSaveAreas(a){localStorage.setItem('z-areas',JSON.stringify(a));}
-function areaItems(id){return JSON.parse(localStorage.getItem('z-area-'+id)||'[]');}
-function areaSave(id,it){localStorage.setItem('z-area-'+id,JSON.stringify(it));}
-function renderArea(id){var items=areaItems(id);var h=items.length?items.map(function(it,i){return '<div class="tr '+(it.done?'done':'')+'"><button class="cb '+(it.done?'on':'')+'" onclick="areaToggle(\''+id+'\','+i+')">'+(it.done?'✓':'')+'</button><div style="flex:1"><div class="tx">'+String(it.t).replace(/</g,'&lt;')+'</div></div><button class="xb" onclick="areaDel(\''+id+'\','+i+')">×</button></div>';}).join(''):'<div class="empty">Nada aqui ainda</div>';var el=document.getElementById('area-list-'+id);if(el)el.innerHTML=h;}
-function areaAdd(id){var inp=document.getElementById('area-in-'+id);var t=inp.value.trim();if(!t)return;var it=areaItems(id);it.push({t:t,done:false});areaSave(id,it);inp.value='';renderArea(id);}
-function areaToggle(id,i){var it=areaItems(id);it[i].done=!it[i].done;areaSave(id,it);renderArea(id);}
-function areaDel(id,i){var it=areaItems(id);it.splice(i,1);areaSave(id,it);renderArea(id);}
+var zAreasCache=[];var zNewFields=[];
+async function zLoadAreas(){var d=await api('areas','GET',null,'select=*&order=created_at');zAreasCache=Array.isArray(d)?d:[];return zAreasCache;}
+function zAreas(){return zAreasCache;}
+function areaDef(id){for(var i=0;i<zAreasCache.length;i++){if(zAreasCache[i].id===id)return zAreasCache[i];}return null;}
+async function buildAreas(){
+  await zLoadAreas();
+  document.querySelectorAll('.z-area-nb').forEach(function(x){x.remove();});
+  document.querySelectorAll('.z-area-screen').forEach(function(x){x.remove();});
+  var nav=document.querySelector('.bnav');var app=document.getElementById('app');
+  zAreasCache.forEach(function(a){
+    var b=document.createElement('button');b.className='nb z-area-nb';b.id='nb-area-'+a.id;b.setAttribute('onclick',"showArea('"+a.id+"')");
+    b.innerHTML='<span style="font-size:20px;line-height:1;display:block">'+a.icon+'</span>'+a.nome;
+    if(nav)nav.appendChild(b);
+    var fields=Array.isArray(a.fields)?a.fields:[];
+    var inputs=fields.length?fields.map(function(f){var t=f.type==='number'?'number':(f.type==='date'?'date':'text');return '<input id="af-'+a.id+'-'+f.key+'" type="'+t+'" placeholder="'+String(f.label).replace(/"/g,'&quot;')+'" style="flex:1;min-width:90px;padding:9px 11px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit">';}).join(''):'<input id="af-'+a.id+'-txt" placeholder="Novo item..." style="flex:1;padding:9px 11px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit">';
+    var sc=document.createElement('div');sc.className='screen z-area-screen';sc.id='s-area-'+a.id;
+    sc.innerHTML='<div class="sh" style="background:var(--surface)"><span style="font-size:20px">'+a.icon+'</span><span style="font-family:Georgia,serif;font-size:17px;font-weight:700;color:var(--gold)">'+a.nome+'</span></div><div id="area-list-'+a.id+'"></div><div class="ab"><div class="rr" style="flex-wrap:wrap;gap:6px">'+inputs+'</div><button class="btn" style="margin-top:6px" onclick="areaAdd(\''+a.id+'\')">+ Adicionar</button></div>';
+    if(app)app.appendChild(sc);
+  });
+  buildAreasUI();
+}
+async function renderArea(id){
+  var a=areaDef(id);if(!a)return;
+  var fields=Array.isArray(a.fields)?a.fields:[];
+  var d=await api('area_items','GET',null,'select=*&area_id=eq.'+id+'&order=created_at');
+  var items=Array.isArray(d)?d:[];
+  var h=items.length?items.map(function(it){
+    var vals=it.vals||{};var main='';var sub='';
+    if(fields.length){main=String(vals[fields[0].key]||'').replace(/</g,'&lt;');sub=fields.slice(1).map(function(f){var v=vals[f.key];return (v!==undefined&&v!==null&&v!=='')?('<span class="dt">'+(f.type==='date'?fd(v):String(v).replace(/</g,'&lt;'))+'</span>'):'';}).join('');}
+    else{main=String(vals.txt||'').replace(/</g,'&lt;');}
+    return '<div class="tr '+(it.done?'done':'')+'"><button class="cb '+(it.done?'on':'')+'" onclick="areaToggle(\''+id+'\',\''+it.id+'\','+(it.done?'true':'false')+')">'+(it.done?'✓':'')+'</button><div style="flex:1"><div class="tx">'+(main||'(item)')+'</div><div class="txm">'+sub+'</div></div><button class="xb" onclick="areaDel(\''+id+'\',\''+it.id+'\')">×</button></div>';
+  }).join(''):'<div class="empty">Nada aqui ainda</div>';
+  var el=document.getElementById('area-list-'+id);if(el)el.innerHTML=h;
+}
+async function areaAdd(id){
+  var a=areaDef(id);if(!a)return;var fields=Array.isArray(a.fields)?a.fields:[];var vals={};var has=false;
+  if(fields.length){fields.forEach(function(f){var el=document.getElementById('af-'+id+'-'+f.key);if(el){var v=el.value;if(v!=='')has=true;vals[f.key]=v;el.value='';}});}
+  else{var el=document.getElementById('af-'+id+'-txt');if(el){vals.txt=el.value.trim();if(vals.txt)has=true;el.value='';}}
+  if(!has)return;
+  await api('area_items','POST',{area_id:id,vals:vals,done:false});renderArea(id);
+}
+async function areaToggle(id,itemId,cur){await api('area_items','PATCH',{done:!cur},'id=eq.'+itemId);renderArea(id);}
+async function areaDel(id,itemId){await api('area_items','DELETE',null,'id=eq.'+itemId);renderArea(id);}
 function showArea(id){document.querySelectorAll('.screen').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.nb').forEach(function(x){x.classList.remove('on');});var sc=document.getElementById('s-area-'+id);if(sc)sc.classList.add('active');var bt=document.getElementById('nb-area-'+id);if(bt)bt.classList.add('on');renderArea(id);}
-function buildAreas(){document.querySelectorAll('.z-area-nb').forEach(function(x){x.remove();});document.querySelectorAll('.z-area-screen').forEach(function(x){x.remove();});var nav=document.querySelector('.bnav');var app=document.getElementById('app');zAreas().forEach(function(a){var b=document.createElement('button');b.className='nb z-area-nb';b.id='nb-area-'+a.id;b.setAttribute('onclick',"showArea('"+a.id+"')");b.innerHTML='<span style="font-size:20px;line-height:1;display:block">'+a.icon+'</span>'+a.name;if(nav)nav.appendChild(b);var sc=document.createElement('div');sc.className='screen z-area-screen';sc.id='s-area-'+a.id;sc.innerHTML='<div class="sh" style="background:var(--surface)"><span style="font-size:20px">'+a.icon+'</span><span style="font-family:Georgia,serif;font-size:17px;font-weight:700;color:var(--gold)">'+a.name+'</span></div><div id="area-list-'+a.id+'"></div><div class="ab"><input id="area-in-'+a.id+'" placeholder="Novo item..." onkeydown="if(event.key===&#39;Enter&#39;)areaAdd(&#39;'+a.id+'&#39;)"><button class="btn" onclick="areaAdd(\''+a.id+'\')">+ Adicionar</button></div>';if(app)app.appendChild(sc);});}
 function zPickNew(e){zNewIcon=e;buildAreasUI();}
-function setAreaIcon(id,e){var a=zAreas();a.forEach(function(x){if(x.id===id)x.icon=e;});zSaveAreas(a);buildAreas();buildAreasUI();}
-function addArea(){var name=(document.getElementById('z-newarea-name').value||'').trim();if(!name)return;var a=zAreas();a.push({id:'a'+Date.now(),name:name,icon:zNewIcon});zSaveAreas(a);zNewIcon='📌';buildAreas();buildAreasUI();}
-function delAreaC(id){var a=zAreas().filter(function(x){return x.id!==id;});zSaveAreas(a);localStorage.removeItem('z-area-'+id);buildAreas();buildAreasUI();}
-function renameArea(id,val){var v=(val||'').trim();if(!v)return;var a=zAreas();a.forEach(function(x){if(x.id===id)x.name=v;});zSaveAreas(a);buildAreas();}
-function buildAreasUI(){var a=zAreas();var h='';a.forEach(function(x){h+='<div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)"><div class="z-tog"><span style="font-size:18px;margin-right:4px">'+x.icon+'</span><input value="'+String(x.name).replace(/"/g,'&quot;')+'" onchange="renameArea(\''+x.id+'\',this.value)" style="flex:1;min-width:0;padding:4px 6px;border:1px solid var(--border2);border-radius:6px;background:var(--surface2);color:var(--cream);font-family:inherit;font-size:13px"><button class="z-mini" onclick="delAreaC(\''+x.id+'\')">×</button></div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">';ZAREAICONS.forEach(function(e){h+='<button class="z-mini'+(x.icon===e?' z-on':'')+'" onclick="setAreaIcon(\''+x.id+'\',\''+e+'\')">'+e+'</button>';});h+='</div></div>';});h+='<div class="z-sec-t" style="margin-top:4px">Nova área</div><input id="z-newarea-name" placeholder="Nome da área" style="width:100%;padding:6px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit;margin-bottom:6px"><div style="font-size:11px;color:var(--text2);margin-bottom:4px">Ícone</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">';ZAREAICONS.forEach(function(e){h+='<button class="z-mini'+(zNewIcon===e?' z-on':'')+'" onclick="zPickNew(\''+e+'\')">'+e+'</button>';});h+='</div><button class="z-mini" style="width:100%;color:var(--gold);border-color:var(--gold)" onclick="addArea()">+ Adicionar área</button>';var el=document.getElementById('z-areas-ui');if(el)el.innerHTML=h;}
+function zAddField(){var lbl=(document.getElementById('z-fld-label').value||'').trim();var typ=document.getElementById('z-fld-type').value;if(!lbl)return;zNewFields.push({key:'f'+Date.now().toString(36),label:lbl,type:typ});document.getElementById('z-fld-label').value='';buildAreasUI();}
+function zDelField(i){zNewFields.splice(i,1);buildAreasUI();}
+async function setAreaIcon(id,e){await api('areas','PATCH',{icon:e},'id=eq.'+id);await buildAreas();}
+async function renameArea(id,val){var v=(val||'').trim();if(!v)return;await api('areas','PATCH',{nome:v},'id=eq.'+id);await buildAreas();}
+async function addArea(){var name=(document.getElementById('z-newarea-name').value||'').trim();if(!name)return;await api('areas','POST',{nome:name,icon:zNewIcon,fields:zNewFields});zNewIcon='📌';zNewFields=[];await buildAreas();}
+async function delAreaC(id){await api('areas','DELETE',null,'id=eq.'+id);await api('area_items','DELETE',null,'area_id=eq.'+id);await buildAreas();}
+function buildAreasUI(){
+  var a=zAreasCache;var h='';
+  a.forEach(function(x){
+    var fl=(Array.isArray(x.fields)&&x.fields.length)?x.fields.map(function(f){return f.label;}).join(', '):'lista simples';
+    h+='<div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)"><div class="z-tog"><span style="font-size:18px;margin-right:4px">'+x.icon+'</span><input value="'+String(x.nome).replace(/"/g,'&quot;')+'" onchange="renameArea(\''+x.id+'\',this.value)" style="flex:1;min-width:0;padding:4px 6px;border:1px solid var(--border2);border-radius:6px;background:var(--surface2);color:var(--cream);font-family:inherit;font-size:13px"><button class="z-mini" onclick="delAreaC(\''+x.id+'\')">×</button></div><div style="font-size:10px;color:var(--text2);margin:2px 0 0 4px">campos: '+fl+'</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">';
+    ZAREAICONS.forEach(function(e){h+='<button class="z-mini'+(x.icon===e?' z-on':'')+'" onclick="setAreaIcon(\''+x.id+'\',\''+e+'\')">'+e+'</button>';});
+    h+='</div></div>';
+  });
+  h+='<div class="z-sec-t" style="margin-top:4px">Nova área</div><input id="z-newarea-name" placeholder="Nome da área" style="width:100%;padding:6px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit;margin-bottom:6px">';
+  h+='<div style="font-size:11px;color:var(--text2);margin-bottom:4px">Campos desta área</div>';
+  if(zNewFields.length){h+=zNewFields.map(function(f,i){return '<div class="z-tog" style="margin-bottom:4px"><span style="font-size:12px">'+String(f.label).replace(/</g,'&lt;')+' <span class="dt">('+f.type+')</span></span><button class="z-mini" onclick="zDelField('+i+')">×</button></div>';}).join('');}
+  else{h+='<div style="font-size:11px;color:var(--text3,#888);margin-bottom:4px">Sem campos = lista simples. Adicione campos abaixo se quiser (ex.: Destino/texto, Custo/número, Data).</div>';}
+  h+='<div class="rr" style="margin-bottom:6px;gap:5px;flex-wrap:wrap"><input id="z-fld-label" placeholder="Nome do campo" style="flex:1;min-width:110px;padding:6px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit"><select id="z-fld-type" style="padding:6px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream)"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option></select><button class="z-mini" onclick="zAddField()">+campo</button></div>';
+  h+='<div style="font-size:11px;color:var(--text2);margin-bottom:4px">Ícone</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">';
+  ZAREAICONS.forEach(function(e){h+='<button class="z-mini'+(zNewIcon===e?' z-on':'')+'" onclick="zPickNew(\''+e+'\')">'+e+'</button>';});
+  h+='</div><button class="z-mini" style="width:100%;color:var(--gold);border-color:var(--gold)" onclick="addArea()">+ Adicionar área</button>';
+  var el=document.getElementById('z-areas-ui');if(el)el.innerHTML=h;
+}
 
 function zApplyDesign(){
  setTheme(localStorage.getItem('z-theme')||'meianoite');
  var ac=localStorage.getItem('z-accent');if(ac){setAccent(ac);var ai=document.getElementById('z-accent');if(ai)ai.value=ac;}
  var tb=JSON.parse(localStorage.getItem('z-tabs')||'{}');ZTABS.forEach(function(p){if(tb[p[0]]===false){var b=zNavBtn(p[0]);if(b)b.style.display='none';}});
  var ic=JSON.parse(localStorage.getItem('z-icons')||'{}');for(var k in ic){var b=zNavBtn(k);if(b){var s=b.querySelector('span');if(s)s.textContent=ic[k];}}
- buildTabsUI();buildIconsUI();buildAreas();buildAreasUI();
+ buildTabsUI();buildIconsUI();buildAreas();
  setLang(localStorage.getItem('z-lang')||'pt');
 }
 zApplyDesign();
