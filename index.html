@@ -174,6 +174,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
     <div class="stat"><div class="sn" id="sb2" style="color:var(--gold)">–</div><div class="sl-label">Contas vencer</div></div>
     <div class="stat"><div class="sn" id="sm" style="color:var(--moss)">–</div><div class="sl-label">Gastos BRL</div></div>
   </div>
+  <button class="btn" style="margin:.25rem 0 .75rem" onclick="openTimeline()">📜 Linha do tempo</button>
   <div class="sl">Hoje</div><div id="htoday"><div class="empty" style="padding:1rem">Carregando...</div></div>
   <div class="sl">Próximos 3 dias</div><div id="hup"></div>
 </div>
@@ -310,7 +311,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
     </div>
   </div>
   <div id="fin-gastos" style="display:none">
-    <div id="gsum"></div><div id="glist"></div>
+    <div id="gsum"></div><div id="implog" style="font-size:11px;color:var(--text2);margin:.3rem 0"></div><div id="glist"></div>
     <div class="ab">
       <input id="gd" placeholder="Descrição">
       <div class="rr"><input id="gv" type="number" placeholder="Valor" style="flex:1"><select id="gc"><option>BRL</option><option>UYU</option><option>USD</option></select></div>
@@ -548,6 +549,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
       <button class="btn" style="flex:1" onclick="closeImp()">Fechar</button>
       <button class="btn pri" style="flex:1" id="impbtn" onclick="impSave()" disabled>Importar</button>
     </div>
+  </div>
+</div>
+
+<div id="tl-modal" class="mo" onclick="if(event.target.id==='tl-modal')closeTimeline()">
+  <div class="moc">
+    <div style="font-family:Georgia,serif;font-size:18px;color:var(--cream);margin-bottom:.5rem">📜 Linha do tempo</div>
+    <div id="tlbody" style="max-height:60vh;overflow:auto"></div>
+    <button class="btn" style="margin-top:10px;width:100%" onclick="closeTimeline()">Fechar</button>
   </div>
 </div>
 
@@ -845,15 +854,37 @@ async function renderGastos(){
   if(usd)sh+='<span class="badge b1">USD '+usd.toFixed(2)+'</span>';
   sh+='</div>';
   document.getElementById('gsum').innerHTML=sh;
+  try{var il=await api('import_log','GET',null,'select=qtd,data&order=data.desc&limit=3');var ile=document.getElementById('implog');if(ile)ile.innerHTML=(Array.isArray(il)&&il.length)?('\u2b06\ufe0f Importa\u00e7\u00f5es recentes: '+il.map(function(x){return x.qtd+' em '+fd(x.data);}).join(' \u00b7 ')):'';}catch(e){}
   document.getElementById('glist').innerHTML=g.length?g.map(x=>`<div class="tr"><div style="flex:1"><div class="tx">${x.descricao}</div><div class="txm"><span class="badge b3" style="font-size:10px">${x.cat}</span>${x.banco?`<span class="badge b0">${x.banco}</span>`:''}<span class="dt">${fd(x.data)}</span></div></div><div style="text-align:right;flex-shrink:0"><div class="amt">${Number(x.val).toFixed(2)}</div><div class="amtc">${x.cur}</div></div><button class="xb" style="font-size:14px;opacity:.6;margin-right:2px" onclick="openEditG('${x.id}','${(x.descricao||'').replace(/'/g,"\\'")}',${x.val},'${x.cur}','${x.cat}','${x.banco||''}','${x.data||''}')">✏️</button><button class="xb" onclick="delG('${x.id}')">×</button></div>`).join(''):'<div class="empty">Nenhum gasto registrado</div>';
 }
 async function delG(id){await api('gastos','DELETE',null,'id=eq.'+id);renderGastos();}
 async function addGasto(){const desc=document.getElementById('gd').value.trim(),v=parseFloat(document.getElementById('gv').value);if(!desc||isNaN(v))return;await api('gastos','POST',{descricao:desc,val:v,cur:document.getElementById('gc').value,cat:document.getElementById('gcat').value,banco:document.getElementById('gbanco').value||null,data:document.getElementById('gdate').value||td()});['gd','gv'].forEach(i=>document.getElementById(i).value='');renderGastos();}
 // IMPORTAR EXTRATO (CSV/Excel/PDF -> IA -> previa -> gastos)
-var impRows=[];
+var impRows=[];var impFileName='';
+async function openTimeline(){
+  document.getElementById('tl-modal').style.display='flex';
+  var body=document.getElementById('tlbody');body.innerHTML='<div class="dt">Carregando...</div>';
+  try{
+    var r=await Promise.all([
+      api('gastos','GET',null,'select=descricao,val,cur,data&order=data.desc&limit=40'),
+      api('registros','GET',null,'select=tipo,valor,data&order=data.desc&limit=40'),
+      api('tasks','GET',null,'select=text,completed_at&done=eq.true&order=completed_at.desc&limit=40'),
+      api('bills','GET',null,'select=name,val,cur,paid_at&paid=eq.true&order=paid_at.desc&limit=20')
+    ]);
+    var ev=[];
+    (r[0]||[]).forEach(function(x){ev.push({d:String(x.data||'').slice(0,10),t:'\ud83d\udcb8 '+x.descricao+' \u2014 '+Number(x.val||0).toFixed(0)+' '+(x.cur||'')});});
+    (r[1]||[]).forEach(function(x){if(x.tipo==='academia')ev.push({d:String(x.data||'').slice(0,10),t:'\ud83c\udfcb\ufe0f Treino'});else if(x.tipo==='peso')ev.push({d:String(x.data||'').slice(0,10),t:'\u2696\ufe0f Peso '+x.valor+' kg'});});
+    (r[2]||[]).forEach(function(x){if(x.completed_at)ev.push({d:String(x.completed_at||'').slice(0,10),t:'\u2705 '+x.text});});
+    (r[3]||[]).forEach(function(x){if(x.paid_at)ev.push({d:String(x.paid_at||'').slice(0,10),t:'\ud83d\udcb0 Pagou '+x.name+' \u2014 '+Number(x.val||0).toFixed(0)+' '+(x.cur||'')});});
+    ev=ev.filter(function(e){return e.d;}).sort(function(a,b){return a.d<b.d?1:-1;}).slice(0,60);
+    body.innerHTML=ev.length?ev.map(function(e){return '<div class="tr"><div style="flex:1;min-width:0"><div class="tx" style="font-size:13px">'+String(e.t).replace(/</g,'&lt;')+'</div></div><span class="dt">'+fd(e.d)+'</span></div>';}).join(''):'<div class="empty">Nada no hist\u00f3rico ainda</div>';
+  }catch(e){body.innerHTML='<div class="empty">Erro ao carregar.</div>';}
+}
+function closeTimeline(){document.getElementById('tl-modal').style.display='none';}
 function closeImp(){document.getElementById('imp-modal').style.display='none';impRows=[];var b=document.getElementById('impbtn');b.disabled=true;b.textContent='Importar';}
 async function impHandle(file){
   if(!file)return;
+  impFileName=file.name||'';
   document.getElementById('imp-modal').style.display='flex';
   var body=document.getElementById('impbody');body.innerHTML='<div class="dt">Lendo arquivo...</div>';
   document.getElementById('impbtn').disabled=true;
@@ -890,7 +921,7 @@ function impPreview(){
   if(!impRows.length){body.innerHTML='<div class="empty">Nenhum gasto encontrado no arquivo.</div>';return;}
   var cats=['Alimentacao','Transporte','Academia','Saude','Lazer','Estudo','Casa','Outro'];
   var h='<div class="dt" style="margin-bottom:6px">'+impRows.length+' gastos encontrados. Desmarque os que nao quer e ajuste a categoria:</div>';
-  h+=impRows.map(function(r,i){return '<div class="tr"><input type="checkbox" checked onchange="impRows['+i+']._skip=!this.checked" style="width:18px;height:18px;flex-shrink:0;margin-right:6px"><div style="flex:1;min-width:0"><div class="tx" style="font-size:13px">'+String(r.descricao||'').replace(/</g,'&lt;')+'</div><div class="txm"><span class="dt">'+(r.data||'')+'</span><span class="amt">'+Number(r.val||0).toFixed(2)+' '+(r.cur||'BRL')+'</span></div></div><select onchange="impRows['+i+'].cat=this.value" style="font-size:11px;padding:3px;border:1px solid var(--border2);border-radius:6px;background:var(--surface2);color:var(--cream);flex-shrink:0">'+cats.map(function(c){return '<option'+((r.cat===c)?' selected':'')+'>'+c+'</option>';}).join('')+'</select></div>';}).join('');
+  h+=impRows.map(function(r,i){return '<div class="tr" style="flex-wrap:wrap;gap:4px;align-items:center"><input type="checkbox" checked onchange="impRows['+i+']._skip=!this.checked" style="width:18px;height:18px;flex-shrink:0"><input value="'+String(r.descricao||'').replace(/"/g,'&quot;')+'" onchange="impRows['+i+'].descricao=this.value" style="flex:1;min-width:110px;padding:4px;border:1px solid var(--border2);border-radius:6px;background:var(--surface2);color:var(--cream);font-size:12px"><input type="number" value="'+Number(r.val||0)+'" onchange="impRows['+i+'].val=parseFloat(this.value)" style="width:64px;padding:4px;border:1px solid var(--border2);border-radius:6px;background:var(--surface2);color:var(--cream);font-size:12px"><select onchange="impRows['+i+'].cur=this.value" style="padding:4px;border:1px solid var(--border2);border-radius:6px;background:var(--surface2);color:var(--cream);font-size:11px">'+['BRL','UYU','USD'].map(function(c){return '<option'+((r.cur===c)?' selected':'')+'>'+c+'</option>';}).join('')+'</select><input type="date" value="'+(r.data||'')+'" onchange="impRows['+i+'].data=this.value" style="padding:4px;border:1px solid var(--border2);border-radius:6px;background:var(--surface2);color:var(--cream);font-size:11px"><select onchange="impRows['+i+'].cat=this.value" style="font-size:11px;padding:4px;border:1px solid var(--border2);border-radius:6px;background:var(--surface2);color:var(--cream)">'+cats.map(function(c){return '<option'+((r.cat===c)?' selected':'')+'>'+c+'</option>';}).join('')+'</select></div>';}).join('');
   body.innerHTML=h;
   document.getElementById('impbtn').disabled=false;
 }
@@ -900,6 +931,7 @@ async function impSave(){
   var b=document.getElementById('impbtn');b.disabled=true;b.textContent='Importando...';
   var payload=sel.map(function(r){return {descricao:String(r.descricao||'gasto').slice(0,120),val:Number(r.val||0),cur:r.cur||'BRL',cat:r.cat||'Outro',banco:null,data:(r.data&&/^\d{4}-\d{2}-\d{2}$/.test(r.data))?r.data:td()};});
   try{await api('gastos','POST',payload);}catch(e){}
+  try{await api('import_log','POST',{qtd:sel.length,arquivo:impFileName||null});}catch(e){}
   closeImp();renderGastos();
   alert(sel.length+' gastos importados!');
 }
@@ -1110,7 +1142,7 @@ async function renderSaude(){
   const meds=ls('zentra-meds',[]);
   document.getElementById('sv-meds').textContent=meds.length+' medicamento'+(meds.length!==1?'s':'');
   renderMedsScreen(meds);
-  document.getElementById('plist').innerHTML=pesos.slice(0,5).map(p=>`<div class="hr-row"><span style="flex:1;font-size:14px;color:var(--cream)">${p.valor} kg</span><span class="dt">${fd(p.data)}</span><button class="xb" onclick="delR('${p.id}')">×</button></div>`).join('');
+  document.getElementById('plist').innerHTML=pesos.slice(0,30).map(p=>`<div class="hr-row"><span style="flex:1;font-size:14px;color:var(--cream)">${p.valor} kg</span><span class="dt">${fd(p.data)}</span><button class="xb" onclick="delR('${p.id}')">×</button></div>`).join('');
 }
 
 function renderMedsScreen(meds){document.getElementById('medslist').innerHTML=(meds||ls('zentra-meds',[])).length?(meds||ls('zentra-meds',[])).map((m,i)=>'<div class="tr"><div style="flex:1"><div class="tx">'+m.n+'</div><div class="txm">'+(m.d?'<span class="dt">'+m.d+'</span>':'')+(m.f?'<span class="badge b3">'+m.f+'</span>':'')+(m.p?'<span class="dt">próx: '+fd(m.p)+'</span>':'')+'</div></div><button class="xb" onclick="delMed('+i+')">×</button></div>').join(''):'<div class="empty">Nenhum medicamento</div>';}
