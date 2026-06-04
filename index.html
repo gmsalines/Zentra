@@ -653,7 +653,8 @@ async function api(table,method,body,filter){
     const r=await fetch(url,o);
     if(r.status===204)return true;
     const t=await r.text();
-    try{return JSON.parse(t);}catch{return [];}
+    if(!r.ok){console.error('API',method,table,r.status,t);return null;}
+    try{return JSON.parse(t);}catch{return t||null;}
   }catch(e){
     console.error('API error:',table,method,e);
     return [];
@@ -1272,7 +1273,7 @@ function zToggleSettings(){var p=document.getElementById('z-settings');p.style.d
 var zNewIcon='📌';
 var ZAREAICONS=['📌','✈️','🏖️','🗺️','🎓','📖','📚','✏️','🏋️','🏃','🧘','🍳','🥗','🍔','☕','🛒','🐶','🐱','🌱','🌸','🌍','🎵','🎸','🎨','🎬','🎮','🏡','💼','💻','📊','📅','✅','📝','❤️','⚽','🏀','💊','🩺','🧳','📷','🎁','🌟','🔥','💰','💳','👑','🦋','🚗','💡','🛠️'];
 var zAreasCache=[];var zNewFields=[];
-async function zLoadAreas(){var d=await api('areas','GET',null,'select=*&order=created_at');zAreasCache=Array.isArray(d)?d:[];return zAreasCache;}
+async function zLoadAreas(){var d=await api('areas','GET',null,'select=*&order=created_at');var raw=Array.isArray(d)?d:[];var ord=JSON.parse(localStorage.getItem('z-areas-order')||'[]');if(ord.length){raw.sort(function(a,b){var ai=ord.indexOf(a.id);var bi=ord.indexOf(b.id);if(ai===-1)ai=999;if(bi===-1)bi=999;return ai-bi;});}zAreasCache=raw;return zAreasCache;}
 function zAreas(){return zAreasCache;}
 function areaDef(id){for(var i=0;i<zAreasCache.length;i++){if(zAreasCache[i].id===id)return zAreasCache[i];}return null;}
 async function buildAreas(){
@@ -1320,13 +1321,14 @@ function zAddField(){var lbl=(document.getElementById('z-fld-label').value||'').
 function zDelField(i){zNewFields.splice(i,1);buildAreasUI();}
 async function setAreaIcon(id,e){await api('areas','PATCH',{icon:e},'id=eq.'+id);await buildAreas();}
 async function renameArea(id,val){var v=(val||'').trim();if(!v)return;await api('areas','PATCH',{nome:v},'id=eq.'+id);await buildAreas();}
-async function addArea(){var name=(document.getElementById('z-newarea-name').value||'').trim();if(!name)return;await api('areas','POST',{nome:name,icon:zNewIcon,fields:zNewFields});zNewIcon='📌';zNewFields=[];await buildAreas();}
+async function addArea(){var name=(document.getElementById('z-newarea-name').value||'').trim();if(!name)return;var res=await api('areas','POST',{nome:name,icon:zNewIcon,fields:zNewFields});if(res===null){var el=document.getElementById('z-area-err');if(el)el.textContent='Erro ao criar área. Verifique o console.';return;}zNewIcon='📌';zNewFields=[];var el=document.getElementById('z-area-err');if(el)el.textContent='';await buildAreas();}
 async function delAreaC(id){await api('areas','DELETE',null,'id=eq.'+id);await api('area_items','DELETE',null,'area_id=eq.'+id);await buildAreas();}
+function moveArea(id,dir){var ord=zAreasCache.map(function(x){return x.id;});var i=ord.indexOf(id);if(dir===-1&&i>0){var t=ord[i-1];ord[i-1]=ord[i];ord[i]=t;}else if(dir===1&&i<ord.length-1){var t=ord[i+1];ord[i+1]=ord[i];ord[i]=t;}localStorage.setItem('z-areas-order',JSON.stringify(ord));buildAreas();}
 function buildAreasUI(){
   var a=zAreasCache;var h='';
   a.forEach(function(x){
     var fl=(Array.isArray(x.fields)&&x.fields.length)?x.fields.map(function(f){return f.label;}).join(', '):'lista simples';
-    h+='<div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)"><div class="z-tog"><span style="font-size:18px;margin-right:4px">'+x.icon+'</span><input value="'+String(x.nome).replace(/"/g,'&quot;')+'" onchange="renameArea(\''+x.id+'\',this.value)" style="flex:1;min-width:0;padding:4px 6px;border:1px solid var(--border2);border-radius:6px;background:var(--surface2);color:var(--cream);font-family:inherit;font-size:13px"><button class="z-mini" onclick="delAreaC(\''+x.id+'\')">×</button></div><div style="font-size:10px;color:var(--text2);margin:2px 0 0 4px">campos: '+fl+'</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">';
+    h+='<div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)"><div class="z-tog"><span style="font-size:18px;margin-right:4px">'+x.icon+'</span><input value="'+String(x.nome).replace(/"/g,'&quot;')+'" onchange="renameArea(\''+x.id+'\',this.value)" style="flex:1;min-width:0;padding:4px 6px;border:1px solid var(--border2);border-radius:6px;background:var(--surface2);color:var(--cream);font-family:inherit;font-size:13px"><button class="z-mini" onclick="moveArea(\''+x.id+'\', -1)" style="padding:2px 5px" title="Mover cima">↑</button><button class="z-mini" onclick="moveArea(\''+x.id+'\', 1)" style="padding:2px 5px" title="Mover baixo">↓</button><button class="z-mini" onclick="delAreaC(\''+x.id+'\')">×</button></div><div style="font-size:10px;color:var(--text2);margin:2px 0 0 4px">campos: '+fl+'</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">';
     ZAREAICONS.forEach(function(e){h+='<button class="z-mini'+(x.icon===e?' z-on':'')+'" onclick="setAreaIcon(\''+x.id+'\',\''+e+'\')">'+e+'</button>';});
     h+='</div></div>';
   });
@@ -1337,7 +1339,7 @@ function buildAreasUI(){
   h+='<div class="rr" style="margin-bottom:6px;gap:5px;flex-wrap:wrap"><input id="z-fld-label" placeholder="Nome do campo" style="flex:1;min-width:110px;padding:6px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit"><select id="z-fld-type" style="padding:6px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream)"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option></select><button class="z-mini" onclick="zAddField()">+campo</button></div>';
   h+='<div style="font-size:11px;color:var(--text2);margin-bottom:4px">Ícone</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">';
   ZAREAICONS.forEach(function(e){h+='<button class="z-mini'+(zNewIcon===e?' z-on':'')+'" onclick="zPickNew(\''+e+'\')">'+e+'</button>';});
-  h+='</div><button class="z-mini" style="width:100%;color:var(--gold);border-color:var(--gold)" onclick="addArea()">+ Adicionar área</button>';
+  h+='</div><button class="z-mini" style="width:100%;color:var(--gold);border-color:var(--gold)" onclick="addArea()">+ Adicionar área</button><div id=\"z-area-err\" style=\"color:#f87171;font-size:11px;margin-top:4px\"></div>';
   var el=document.getElementById('z-areas-ui');if(el)el.innerHTML=h;
 }
 
