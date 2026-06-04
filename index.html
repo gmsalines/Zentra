@@ -90,6 +90,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 .plabel{font-size:13px;color:var(--text2);text-align:center;margin-top:.5rem;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
 <style>
@@ -315,6 +317,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
       <select id="gcat"><option>Alimentação</option><option>Transporte</option><option>Academia</option><option>Saúde</option><option>Lazer</option><option>Estudo</option><option>Casa</option><option>Outro</option></select>
       <select id="gbanco"><option value="">Banco</option><option>Nubank</option><option>Itaú</option><option>Inter</option><option>C6</option><option>Outro</option></select>
       <input id="gdate" type="date">
+      <input type="file" id="impfile" accept=".csv,.xlsx,.xls,.pdf" style="display:none" onchange="impHandle(this.files[0]);this.value='';">
+      <button class="btn" onclick="document.getElementById('impfile').click()">⬆️ Importar extrato (CSV/Excel/PDF)</button>
       <button class="btn" onclick="addGasto()">+ Adicionar gasto</button>
     </div>
   </div>
@@ -535,6 +539,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
     <button class="btn pri" onclick="saveEditG()">Salvar</button>
   </div>
 </div>
+
+<div id="imp-modal" class="mo" onclick="if(event.target.id==='imp-modal')closeImp()">
+  <div class="moc">
+    <div style="font-family:Georgia,serif;font-size:18px;color:var(--cream);margin-bottom:.5rem">Importar extrato</div>
+    <div id="impbody" style="max-height:55vh;overflow:auto"></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn" style="flex:1" onclick="closeImp()">Fechar</button>
+      <button class="btn pri" style="flex:1" id="impbtn" onclick="impSave()" disabled>Importar</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- EDIT BILL MODAL -->
 <div id="edit-bill-modal" class="mo" onclick="if(event.target.id==='edit-bill-modal')closeEditB()">
@@ -833,6 +849,60 @@ async function renderGastos(){
 }
 async function delG(id){await api('gastos','DELETE',null,'id=eq.'+id);renderGastos();}
 async function addGasto(){const desc=document.getElementById('gd').value.trim(),v=parseFloat(document.getElementById('gv').value);if(!desc||isNaN(v))return;await api('gastos','POST',{descricao:desc,val:v,cur:document.getElementById('gc').value,cat:document.getElementById('gcat').value,banco:document.getElementById('gbanco').value||null,data:document.getElementById('gdate').value||td()});['gd','gv'].forEach(i=>document.getElementById(i).value='');renderGastos();}
+// IMPORTAR EXTRATO (CSV/Excel/PDF -> IA -> previa -> gastos)
+var impRows=[];
+function closeImp(){document.getElementById('imp-modal').style.display='none';impRows=[];var b=document.getElementById('impbtn');b.disabled=true;b.textContent='Importar';}
+async function impHandle(file){
+  if(!file)return;
+  document.getElementById('imp-modal').style.display='flex';
+  var body=document.getElementById('impbody');body.innerHTML='<div class="dt">Lendo arquivo...</div>';
+  document.getElementById('impbtn').disabled=true;
+  var texto='';
+  try{
+    var name=(file.name||'').toLowerCase();
+    if(name.endsWith('.pdf')){
+      pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      var buf=await file.arrayBuffer();
+      var pdf=await pdfjsLib.getDocument({data:buf}).promise;
+      for(var i=1;i<=pdf.numPages;i++){var pg=await pdf.getPage(i);var tc=await pg.getTextContent();texto+=tc.items.map(function(it){return it.str;}).join(' ')+'\n';}
+    } else {
+      var ab=await file.arrayBuffer();
+      var wb=XLSX.read(ab,{type:'array'});
+      texto=XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]);
+    }
+  }catch(e){body.innerHTML='<div class="empty">Nao consegui ler o arquivo: '+String(e).slice(0,80)+'</div>';return;}
+  if(!texto.trim()){body.innerHTML='<div class="empty">Arquivo vazio ou ilegivel.</div>';return;}
+  body.innerHTML='<div class="dt">Analisando lancamentos com IA...</div>';
+  texto=texto.slice(0,12000);
+  var prompt='Extraia os GASTOS/DESPESAS deste extrato bancario. Responda APENAS um array JSON, sem texto extra: [{"data":"YYYY-MM-DD","descricao":"texto curto","val":12.34,"cur":"BRL","cat":"Alimentacao|Transporte|Academia|Saude|Lazer|Estudo|Casa|Outro"}]. Regras: so SAIDAS/debitos/despesas (ignore entradas, creditos, saldos, transferencias recebidas, pagamentos recebidos). val sempre positivo. Se a moeda nao estiver clara use BRL. Escolha a categoria mais provavel pela descricao. Extrato:\n'+texto;
+  try{
+    var res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt,max_tokens:6000})});
+    var data=await res.json();
+    var c=((data&&data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'').trim().replace(/```json|```/g,'').trim();
+    var mm=c.match(/\[[\s\S]*\]/);if(mm)c=mm[0];
+    var rows=JSON.parse(c);
+    impRows=Array.isArray(rows)?rows:[];
+  }catch(e){body.innerHTML='<div class="empty">A IA nao conseguiu extrair os lancamentos. Tenta um CSV mais simples (colunas data, descricao, valor).</div>';return;}
+  impPreview();
+}
+function impPreview(){
+  var body=document.getElementById('impbody');
+  if(!impRows.length){body.innerHTML='<div class="empty">Nenhum gasto encontrado no arquivo.</div>';return;}
+  var cats=['Alimentacao','Transporte','Academia','Saude','Lazer','Estudo','Casa','Outro'];
+  var h='<div class="dt" style="margin-bottom:6px">'+impRows.length+' gastos encontrados. Desmarque os que nao quer e ajuste a categoria:</div>';
+  h+=impRows.map(function(r,i){return '<div class="tr"><input type="checkbox" checked onchange="impRows['+i+']._skip=!this.checked" style="width:18px;height:18px;flex-shrink:0;margin-right:6px"><div style="flex:1;min-width:0"><div class="tx" style="font-size:13px">'+String(r.descricao||'').replace(/</g,'&lt;')+'</div><div class="txm"><span class="dt">'+(r.data||'')+'</span><span class="amt">'+Number(r.val||0).toFixed(2)+' '+(r.cur||'BRL')+'</span></div></div><select onchange="impRows['+i+'].cat=this.value" style="font-size:11px;padding:3px;border:1px solid var(--border2);border-radius:6px;background:var(--surface2);color:var(--cream);flex-shrink:0">'+cats.map(function(c){return '<option'+((r.cat===c)?' selected':'')+'>'+c+'</option>';}).join('')+'</select></div>';}).join('');
+  body.innerHTML=h;
+  document.getElementById('impbtn').disabled=false;
+}
+async function impSave(){
+  var sel=impRows.filter(function(r){return !r._skip;});
+  if(!sel.length){closeImp();return;}
+  var b=document.getElementById('impbtn');b.disabled=true;b.textContent='Importando...';
+  var payload=sel.map(function(r){return {descricao:String(r.descricao||'gasto').slice(0,120),val:Number(r.val||0),cur:r.cur||'BRL',cat:r.cat||'Outro',banco:null,data:(r.data&&/^\d{4}-\d{2}-\d{2}$/.test(r.data))?r.data:td()};});
+  try{await api('gastos','POST',payload);}catch(e){}
+  closeImp();renderGastos();
+  alert(sel.length+' gastos importados!');
+}
 
 // ORC
 async function renderOrc(){
