@@ -292,6 +292,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
     <button class="fb" data-tab="orc" onclick="showFin(this,'orc')">Orçamento</button>
     <button class="fb" data-tab="comp" onclick="showFin(this,'comp')">Compras</button>
     <button class="fb" data-tab="div" onclick="showFin(this,'div')">Dívidas</button>
+    <button class="fb" data-tab="inv" onclick="showFin(this,'inv')">Investim.</button>
+    <button class="fb" data-tab="metasf" onclick="showFin(this,'metasf')">Metas</button>
     <button class="fb" data-tab="graf" onclick="showFin(this,'graf')">📊</button>
   </div>
   <div id="fin-contas">
@@ -351,6 +353,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
       <select id="dbanco"><option value="">Banco de recebimento</option><option>Nubank</option><option>Itaú</option><option>PIX</option><option>Efectivo</option><option>Outro</option></select>
       <input id="ddate" type="date">
       <button class="btn" onclick="addDiv()">+ Registrar dívida</button>
+    </div>
+  </div>
+  <div id="fin-inv" style="display:none">
+    <div id="invlist"></div>
+    <div class="ab">
+      <input id="invn" placeholder="Nome do investimento">
+      <div class="rr"><input id="inva" type="number" placeholder="Valor aplicado" style="flex:1"><input id="invat" type="number" placeholder="Valor atual" style="flex:1"></div>
+      <button class="btn" onclick="addInv()">+ Adicionar investimento</button>
+    </div>
+  </div>
+  <div id="fin-metasf" style="display:none">
+    <div id="metasflist"></div>
+    <div class="ab">
+      <input id="mft" placeholder="Meta (ex: juntar p/ viagem)">
+      <div class="rr"><input id="mfalvo" type="number" placeholder="Valor alvo" style="flex:1"><input id="mfat" type="number" placeholder="Já guardado" style="flex:1"></div>
+      <input id="mfprazo" type="date">
+      <button class="btn" onclick="addMetaF()">+ Adicionar meta</button>
     </div>
   </div>
 </div>
@@ -637,6 +656,8 @@ function render(){
     else if(tab==='comp')renderComp();
     else if(tab==='div')renderDiv();
     else if(tab==='graf')renderGraf();
+    else if(tab==='inv')renderInv();
+    else if(tab==='metasf')renderMetasF();
   }
   else if(curTab==='saude')renderSaude();
 }
@@ -755,8 +776,8 @@ async function addPs(){const t=document.getElementById('pt').value.trim();if(!t)
 // FIN
 function showFin(btn,tab){
   document.querySelectorAll('#s-fin .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
-  ['contas','gastos','orc','comp','div','graf'].forEach(t=>document.getElementById('fin-'+t).style.display=t===tab?'block':'none');
-  if(tab==='contas')renderBills();else if(tab==='gastos')renderGastos();else if(tab==='orc')renderOrc();else if(tab==='comp')renderComp();else if(tab==='div')renderDiv();else if(tab==='graf')renderGraf();
+  ['contas','gastos','orc','comp','div','inv','metasf','graf'].forEach(t=>document.getElementById('fin-'+t).style.display=t===tab?'block':'none');
+  if(tab==='contas')renderBills();else if(tab==='gastos')renderGastos();else if(tab==='orc')renderOrc();else if(tab==='comp')renderComp();else if(tab==='div')renderDiv();else if(tab==='inv')renderInv();else if(tab==='metasf')renderMetasF();else if(tab==='graf')renderGraf();
 }
 
 // BILLS
@@ -772,6 +793,28 @@ async function renderBills(){
 async function togB(id,paid){await api('bills','PATCH',{paid,paid_at:paid?new Date().toISOString():null},'id=eq.'+id);renderBills();}
 async function delB(id){await api('bills','DELETE',null,'id=eq.'+id);renderBills();}
 async function addBill(){const n=document.getElementById('bn').value.trim(),v=parseFloat(document.getElementById('bv').value);if(!n||isNaN(v))return;await api('bills','POST',{name:n,val:v,cur:document.getElementById('bc').value,due:document.getElementById('bd').value||null,banco:document.getElementById('bb').value||null,forma_pagamento:document.getElementById('bf').value||null,paid:false});['bn','bv','bd'].forEach(i=>document.getElementById(i).value='');renderBills();}
+// INVESTIMENTOS
+async function renderInv(){
+  const d=await api('investimentos','GET',null,'select=*&order=created_at');
+  const inv=Array.isArray(d)?d:[];
+  const ta=inv.reduce((s,x)=>s+Number(x.aplicado||0),0), tn=inv.reduce((s,x)=>s+Number(x.atual||0),0), rend=tn-ta, pct=ta>0?(rend/ta*100):0;
+  let h='<div class="card" style="padding:.75rem;margin-bottom:.6rem"><div style="display:flex;justify-content:space-between"><span class="dt">Aplicado</span><span class="amt">R$'+ta.toFixed(0)+'</span></div><div style="display:flex;justify-content:space-between"><span class="dt">Atual</span><span class="amt">R$'+tn.toFixed(0)+'</span></div><div style="display:flex;justify-content:space-between"><span class="dt">Rendimento</span><span class="amt" style="color:'+(rend>=0?'var(--moss)':'var(--red)')+'">R$'+rend.toFixed(0)+' ('+(rend>=0?'+':'')+pct.toFixed(1)+'%)</span></div></div>';
+  h+=inv.map(function(x){var r=Number(x.atual||0)-Number(x.aplicado||0);var p=Number(x.aplicado)>0?(r/Number(x.aplicado)*100):0;return '<div class="tr"><div style="flex:1"><div class="tx">'+String(x.nome||'').replace(/</g,'&lt;')+'</div><div class="txm"><span class="dt">aplic. R$'+Number(x.aplicado||0).toFixed(0)+'</span><span class="amt">R$'+Number(x.atual||0).toFixed(0)+'</span><span class="dt" style="color:'+(r>=0?'var(--moss)':'var(--red)')+'">'+(r>=0?'+':'')+r.toFixed(0)+' ('+(r>=0?'+':'')+p.toFixed(1)+'%)</span></div></div><button class="xb" onclick="updInv(\''+x.id+'\','+Number(x.atual||0)+')">✏️</button><button class="xb" onclick="delInv(\''+x.id+'\')">×</button></div>';}).join('');
+  document.getElementById('invlist').innerHTML=inv.length?h:'<div class="empty">Nenhum investimento ainda</div>';
+}
+async function addInv(){var n=document.getElementById('invn').value.trim();var a=parseFloat(document.getElementById('inva').value);var at=parseFloat(document.getElementById('invat').value);if(!n||isNaN(a))return;await api('investimentos','POST',{nome:n,aplicado:a,atual:isNaN(at)?a:at});['invn','inva','invat'].forEach(function(i){document.getElementById(i).value='';});renderInv();}
+async function updInv(id,cur){var v=prompt('Novo valor atual (R$):',cur);if(v===null)return;var n=parseFloat(v);if(isNaN(n))return;await api('investimentos','PATCH',{atual:n},'id=eq.'+id);renderInv();}
+async function delInv(id){if(!confirm('Apagar investimento?'))return;await api('investimentos','DELETE',null,'id=eq.'+id);renderInv();}
+// METAS FINANCEIRAS
+async function renderMetasF(){
+  const d=await api('metas_fin','GET',null,'select=*&order=created_at');
+  const ms=Array.isArray(d)?d:[];
+  var h=ms.map(function(x){var alvo=Number(x.alvo||0);var at=Number(x.atual||0);var p=alvo>0?Math.min(100,at/alvo*100):0;return '<div class="card" style="padding:.75rem;margin-bottom:.5rem"><div style="display:flex;justify-content:space-between;align-items:center"><span class="tx">'+String(x.titulo||'').replace(/</g,'&lt;')+'</span><button class="xb" onclick="delMetaF(\''+x.id+'\')">×</button></div><div class="pbar" style="margin:.4rem 0"><div class="pfill" style="background:var(--gold);width:'+p.toFixed(0)+'%"></div></div><div class="txm"><span class="dt">R$'+at.toFixed(0)+' / R$'+alvo.toFixed(0)+' ('+p.toFixed(0)+'%)</span>'+(x.prazo?'<span class="dt">até '+fd(x.prazo)+'</span>':'')+'<button class="xb" onclick="updMetaF(\''+x.id+'\','+at+')">✏️ atualizar</button></div></div>';}).join('');
+  document.getElementById('metasflist').innerHTML=ms.length?h:'<div class="empty">Nenhuma meta financeira ainda</div>';
+}
+async function addMetaF(){var t=document.getElementById('mft').value.trim();var al=parseFloat(document.getElementById('mfalvo').value);if(!t||isNaN(al))return;var at=parseFloat(document.getElementById('mfat').value);await api('metas_fin','POST',{titulo:t,alvo:al,atual:isNaN(at)?0:at,prazo:document.getElementById('mfprazo').value||null});['mft','mfalvo','mfat','mfprazo'].forEach(function(i){document.getElementById(i).value='';});renderMetasF();}
+async function updMetaF(id,cur){var v=prompt('Quanto você já guardou (R$):',cur);if(v===null)return;var n=parseFloat(v);if(isNaN(n))return;await api('metas_fin','PATCH',{atual:n},'id=eq.'+id);renderMetasF();}
+async function delMetaF(id){if(!confirm('Apagar meta?'))return;await api('metas_fin','DELETE',null,'id=eq.'+id);renderMetasF();}
 
 // GASTOS
 async function renderGastos(){
