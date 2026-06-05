@@ -653,8 +653,7 @@ async function api(table,method,body,filter){
     const r=await fetch(url,o);
     if(r.status===204)return true;
     const t=await r.text();
-    if(!r.ok){console.error('API',method,table,r.status,t);return null;}
-    try{return JSON.parse(t);}catch{return t||null;}
+    try{return JSON.parse(t);}catch{return [];}
   }catch(e){
     console.error('API error:',table,method,e);
     return [];
@@ -1120,8 +1119,8 @@ async function renderSaude(){
   const si=new Date();si.setDate(si.getDate()-si.getDay());
   const trsem=treinos.filter(t=>new Date(t.data+'T00:00:00')>=si);
   document.getElementById('sv-treino').textContent=trsem.length+'/'+(meta.treino||4)+' esta semana';
-  document.getElementById('trsem').textContent=trsem.length;
-  document.getElementById('tracum').textContent=ls('zentra-acum',0);
+  document.getElementById('trsem').textContent=new Set(trsem.map(function(t){return String(t.data).slice(0,10);})).size;
+  document.getElementById('tracum').textContent=new Set(treinos.map(function(t){return String(t.data).slice(0,10);})).size;
   const dias=['D','S','T','Q','Q','S','S'],trD=trsem.map(t=>new Date(t.data+'T00:00:00').getDay());
   document.getElementById('trweek').innerHTML=dias.map((d,i)=>'<div style="flex:1;text-align:center;font-size:10px;color:'+(trD.includes(i)?'var(--moss)':'var(--text3)')+'">'+(trD.includes(i)?'✓':d)+'</div>').join('');
   document.getElementById('trlist').innerHTML=treinos.slice(0,5).map(t=>`<div class="hr-row"><span style="flex:1;font-size:14px;color:var(--cream)">${t.valor}${t.notas?' — '+t.notas:''}</span><span class="dt">${fd(t.data)}</span><button class="xb" onclick="delR('${t.id}')">×</button></div>`).join('');
@@ -1156,7 +1155,7 @@ function delMed(i){const meds=ls('zentra-meds',[]);meds.splice(i,1);lss('zentra-
 async function addPeso(){const v=document.getElementById('pv').value.trim();if(!v)return;const mt=parseFloat(document.getElementById('pm').value);if(mt){const m=ls('zentra-smeta',{});m.peso=mt;lss('zentra-smeta',m);}await api('registros','POST',{tipo:'peso',valor:v,data:document.getElementById('pd').value||td()});['pv','pm'].forEach(i=>document.getElementById(i).value='');renderSaude();}
 async function addTreino(){const t=document.getElementById('trt').value,min=document.getElementById('trmin').value,cal=document.getElementById('trcal').value,muscle=document.getElementById('trmuscle').value.trim();const notas=[muscle,min?min+'min':'',cal?cal+'kcal':''].filter(Boolean).join(' · ');await api('registros','POST',{tipo:'academia',valor:t,notas:notas||null,data:document.getElementById('trd').value||td()});const a=ls('zentra-acum',0);lss('zentra-acum',a+1);['trmin','trcal','trmuscle'].forEach(i=>document.getElementById(i).value='');renderSaude();}
 function saveAcum(){const v=parseInt(document.getElementById('tracuminput').value);if(isNaN(v))return;lss('zentra-acum',v);document.getElementById('tracum').textContent=v;alert('Salvo!');}
-function zeraSem(){if(confirm('Zerar contador semanal?')){lss('zentra-acum',0);document.getElementById('tracum').textContent=0;renderSaude();}}
+async function zeraSem(){if(!confirm('Apagar os treinos desta semana?'))return;var si=new Date();si.setDate(si.getDate()-si.getDay());var siStr=si.toISOString().slice(0,10);await api('registros','DELETE',null,'tipo=eq.academia&data=gte.'+siStr);renderSaude();}
 async function addAlim(){const r=document.getElementById('aref').value.trim(),k=document.getElementById('akcalin').value,pr=document.getElementById('aprot').value;if(!r)return;const mt=parseInt(document.getElementById('ametain').value);const mtp=parseInt(document.getElementById('aprotmeta').value);const m=ls('zentra-smeta',{});if(mt){m.kcal=mt;}if(mtp){m.prot=mtp;}if(mt||mtp)lss('zentra-smeta',m);await api('registros','POST',{tipo:'alimentacao',valor:k||'0',notas:r,data:td(),banco:pr||null});['aref','akcalin','ametain','aprot','aprotmeta'].forEach(i=>document.getElementById(i).value='');renderSaude();}
 async function addSono(){const h=document.getElementById('sho').value.trim();if(!h)return;await api('registros','POST',{tipo:'sono',valor:h,data:document.getElementById('sd2').value||td()});['sho'].forEach(i=>document.getElementById(i).value='');renderSaude();}
 async function delR(id){await api('registros','DELETE',null,'id=eq.'+id);renderSaude();}
@@ -1273,7 +1272,7 @@ function zToggleSettings(){var p=document.getElementById('z-settings');p.style.d
 var zNewIcon='📌';
 var ZAREAICONS=['📌','✈️','🏖️','🗺️','🎓','📖','📚','✏️','🏋️','🏃','🧘','🍳','🥗','🍔','☕','🛒','🐶','🐱','🌱','🌸','🌍','🎵','🎸','🎨','🎬','🎮','🏡','💼','💻','📊','📅','✅','📝','❤️','⚽','🏀','💊','🩺','🧳','📷','🎁','🌟','🔥','💰','💳','👑','🦋','🚗','💡','🛠️'];
 var zAreasCache=[];var zNewFields=[];
-async function zLoadAreas(){var d=await api('areas','GET',null,'select=*&order=created_at');var raw=Array.isArray(d)?d:[];var ord=JSON.parse(localStorage.getItem('z-areas-order')||'[]');if(ord.length){raw.sort(function(a,b){var ai=ord.indexOf(a.id);var bi=ord.indexOf(b.id);if(ai===-1)ai=999;if(bi===-1)bi=999;return ai-bi;});}zAreasCache=raw;return zAreasCache;}
+async function zLoadAreas(){var d=await api('areas','GET',null,'select=*&order=created_at');zAreasCache=Array.isArray(d)?d:[];return zAreasCache;}
 function zAreas(){return zAreasCache;}
 function areaDef(id){for(var i=0;i<zAreasCache.length;i++){if(zAreasCache[i].id===id)return zAreasCache[i];}return null;}
 async function buildAreas(){
@@ -1321,14 +1320,13 @@ function zAddField(){var lbl=(document.getElementById('z-fld-label').value||'').
 function zDelField(i){zNewFields.splice(i,1);buildAreasUI();}
 async function setAreaIcon(id,e){await api('areas','PATCH',{icon:e},'id=eq.'+id);await buildAreas();}
 async function renameArea(id,val){var v=(val||'').trim();if(!v)return;await api('areas','PATCH',{nome:v},'id=eq.'+id);await buildAreas();}
-async function addArea(){var name=(document.getElementById('z-newarea-name').value||'').trim();if(!name)return;var res=await api('areas','POST',{nome:name,icon:zNewIcon,fields:zNewFields});if(res===null){var el=document.getElementById('z-area-err');if(el)el.textContent='Erro ao criar área. Verifique o console.';return;}zNewIcon='📌';zNewFields=[];var el=document.getElementById('z-area-err');if(el)el.textContent='';await buildAreas();}
+async function addArea(){var name=(document.getElementById('z-newarea-name').value||'').trim();if(!name)return;await api('areas','POST',{nome:name,icon:zNewIcon,fields:zNewFields});zNewIcon='📌';zNewFields=[];await buildAreas();}
 async function delAreaC(id){await api('areas','DELETE',null,'id=eq.'+id);await api('area_items','DELETE',null,'area_id=eq.'+id);await buildAreas();}
-function moveArea(id,dir){var ord=zAreasCache.map(function(x){return x.id;});var i=ord.indexOf(id);if(dir===-1&&i>0){var t=ord[i-1];ord[i-1]=ord[i];ord[i]=t;}else if(dir===1&&i<ord.length-1){var t=ord[i+1];ord[i+1]=ord[i];ord[i]=t;}localStorage.setItem('z-areas-order',JSON.stringify(ord));buildAreas();}
 function buildAreasUI(){
   var a=zAreasCache;var h='';
   a.forEach(function(x){
     var fl=(Array.isArray(x.fields)&&x.fields.length)?x.fields.map(function(f){return f.label;}).join(', '):'lista simples';
-    h+='<div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)"><div class="z-tog"><span style="font-size:18px;margin-right:4px">'+x.icon+'</span><input value="'+String(x.nome).replace(/"/g,'&quot;')+'" onchange="renameArea(\''+x.id+'\',this.value)" style="flex:1;min-width:0;padding:4px 6px;border:1px solid var(--border2);border-radius:6px;background:var(--surface2);color:var(--cream);font-family:inherit;font-size:13px"><button class="z-mini" onclick="moveArea(\''+x.id+'\', -1)" style="padding:2px 5px" title="Mover cima">↑</button><button class="z-mini" onclick="moveArea(\''+x.id+'\', 1)" style="padding:2px 5px" title="Mover baixo">↓</button><button class="z-mini" onclick="delAreaC(\''+x.id+'\')">×</button></div><div style="font-size:10px;color:var(--text2);margin:2px 0 0 4px">campos: '+fl+'</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">';
+    h+='<div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)"><div class="z-tog"><span style="font-size:18px;margin-right:4px">'+x.icon+'</span><input value="'+String(x.nome).replace(/"/g,'&quot;')+'" onchange="renameArea(\''+x.id+'\',this.value)" style="flex:1;min-width:0;padding:4px 6px;border:1px solid var(--border2);border-radius:6px;background:var(--surface2);color:var(--cream);font-family:inherit;font-size:13px"><button class="z-mini" onclick="delAreaC(\''+x.id+'\')">×</button></div><div style="font-size:10px;color:var(--text2);margin:2px 0 0 4px">campos: '+fl+'</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">';
     ZAREAICONS.forEach(function(e){h+='<button class="z-mini'+(x.icon===e?' z-on':'')+'" onclick="setAreaIcon(\''+x.id+'\',\''+e+'\')">'+e+'</button>';});
     h+='</div></div>';
   });
@@ -1339,7 +1337,7 @@ function buildAreasUI(){
   h+='<div class="rr" style="margin-bottom:6px;gap:5px;flex-wrap:wrap"><input id="z-fld-label" placeholder="Nome do campo" style="flex:1;min-width:110px;padding:6px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit"><select id="z-fld-type" style="padding:6px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream)"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option></select><button class="z-mini" onclick="zAddField()">+campo</button></div>';
   h+='<div style="font-size:11px;color:var(--text2);margin-bottom:4px">Ícone</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">';
   ZAREAICONS.forEach(function(e){h+='<button class="z-mini'+(zNewIcon===e?' z-on':'')+'" onclick="zPickNew(\''+e+'\')">'+e+'</button>';});
-  h+='</div><button class="z-mini" style="width:100%;color:var(--gold);border-color:var(--gold)" onclick="addArea()">+ Adicionar área</button><div id=\"z-area-err\" style=\"color:#f87171;font-size:11px;margin-top:4px\"></div>';
+  h+='</div><button class="z-mini" style="width:100%;color:var(--gold);border-color:var(--gold)" onclick="addArea()">+ Adicionar área</button>';
   var el=document.getElementById('z-areas-ui');if(el)el.innerHTML=h;
 }
 
