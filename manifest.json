@@ -2,7 +2,7 @@
   "name": "Zentra",
   "short_name": "Zentra",
   "description": "Seu painel pessoal — tarefas, finanças e saúde.",
-  "start_url": "/",
+  "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
