@@ -1190,7 +1190,7 @@ async function zLogin(){
       if(d.refresh_token) localStorage.setItem('z-refresh',d.refresh_token);
       document.getElementById('z-login').style.display='none';
       try{localStorage.setItem('z-name',email.split('@')[0]);var _hg=document.getElementById('hgreet');if(_hg)_hg.textContent=email.split('@')[0];}catch(e){}
-      err.textContent=''; renderHome();
+      err.textContent=''; renderHome(); buildAreas();
     } else { err.textContent='Email ou senha incorretos.'; }
   }catch(e){ err.textContent='Erro ao conectar.'; }
 }
@@ -1209,7 +1209,7 @@ async function zSignup(){
       if(d.refresh_token) localStorage.setItem('z-refresh',d.refresh_token);
       try{localStorage.setItem('z-name',email.split('@')[0]);var _hg=document.getElementById('hgreet');if(_hg)_hg.textContent=email.split('@')[0];}catch(e){}
       document.getElementById('z-login').style.display='none';
-      err.textContent=''; renderHome();
+      err.textContent=''; renderHome(); buildAreas();
     } else if(d.user||d.id){
       err.textContent='Conta criada! Agora toque em Entrar com o mesmo email e senha.';
     } else {
@@ -1224,7 +1224,7 @@ async function zInit(){
     try{
       const r=await fetch(SUPA_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:rt})});
       const d=await r.json();
-      if(d.access_token){ H['Authorization']='Bearer '+d.access_token; if(d.refresh_token) localStorage.setItem('z-refresh',d.refresh_token); renderHome(); return; }
+      if(d.access_token){ H['Authorization']='Bearer '+d.access_token; if(d.refresh_token) localStorage.setItem('z-refresh',d.refresh_token); renderHome(); buildAreas(); return; }
     }catch(e){}
     localStorage.removeItem('z-refresh');
   }
