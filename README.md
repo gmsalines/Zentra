@@ -118,6 +118,8 @@ A premissa por trás de tudo: o destino já estava escrito — só faltava a fer
 
 Projeto em **evolução contínua**, usado no dia a dia. Próximos passos em estudo: cadastro aberto, notificações de saída mais ricas e validação com usuários reais.
 
+> ℹ️ O app web está 100% funcional. O **registro por WhatsApp** já funciona e é o diferencial do produto, mas hoje roda em **piloto** (ambiente sandbox da Twilio) — está sendo liberado de forma gradual, e a versão aberta a todos é o próximo passo.
+
 ---
 
 <div align="center">
