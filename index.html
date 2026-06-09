@@ -329,6 +329,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
       <div class="rr"><input id="gv" type="number" placeholder="Valor" style="flex:1"><select id="gc"><option>BRL</option><option>UYU</option><option>USD</option></select></div>
       <select id="gcat"><option>Alimentação</option><option>Transporte</option><option>Academia</option><option>Saúde</option><option>Lazer</option><option>Estudo</option><option>Casa</option><option>Outro</option></select>
       <select id="gbanco"><option value="">Banco</option><option>Nubank</option><option>Itaú</option><option>Inter</option><option>C6</option><option>Outro</option></select>
+      <input id="gp" placeholder="De quem? (vazio = você)">
       <input id="gdate" type="date">
       <input type="file" id="impfile" accept=".csv,.xlsx,.xls,.pdf" style="display:none" onchange="impHandle(this.files[0]);this.value='';">
       <button class="btn" onclick="document.getElementById('impfile').click()">⬆️ Importar extrato (CSV/Excel/PDF)</button>
@@ -355,8 +356,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
     </div>
   </div>
   <div id="fin-graf" style="display:none">
-    <div class="sl">Gastos por categoria — mês atual</div>
-    <div style="position:relative;height:240px;margin-bottom:1rem"><canvas id="chart-cat"></canvas></div>
+    <div id="graf-mes-wrap" style="margin-bottom:.6rem"></div>
+    <div class="sl">Gastos por categoria</div>
+    <div style="position:relative;height:240px;margin-bottom:1rem"><canvas id="chart-cat"></canvas><div id="chart-cat-empty" class="empty" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center">Sem gastos neste mês</div></div>
     <div class="sl">Evolução mensal (BRL)</div>
     <div style="position:relative;height:200px;margin-bottom:1rem"><canvas id="chart-mensal"></canvas></div>
     <div id="graf-resumo"></div>
@@ -548,6 +550,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
     </div>
     <select id="eg-cat" style="width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);margin-bottom:8px;font-family:inherit;"><option>Alimentação</option><option>Transporte</option><option>Academia</option><option>Saúde</option><option>Lazer</option><option>Estudo</option><option>Casa</option><option>Outro</option></select>
     <select id="eg-banco" style="width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);margin-bottom:8px;font-family:inherit;"><option value="">Banco</option><option>Nubank</option><option>Itaú</option><option>Inter</option><option>C6</option><option>Outro</option></select>
+    <input id="eg-pessoa" placeholder="De quem? (vazio = você)" style="width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);margin-bottom:8px;font-family:inherit;outline:none;">
     <input id="eg-data" type="date" style="width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);margin-bottom:12px;font-family:inherit;">
     <button class="btn pri" onclick="saveEditG()">Salvar</button>
   </div>
@@ -867,10 +870,10 @@ async function renderGastos(){
   sh+='</div>';
   document.getElementById('gsum').innerHTML=sh;
   try{var il=await api('import_log','GET',null,'select=qtd,data&order=data.desc&limit=3');var ile=document.getElementById('implog');if(ile)ile.innerHTML=(Array.isArray(il)&&il.length)?('\u2b06\ufe0f Importa\u00e7\u00f5es recentes: '+il.map(function(x){return x.qtd+' em '+fd(x.data);}).join(' \u00b7 ')):'';}catch(e){}
-  document.getElementById('glist').innerHTML=g.length?g.map(x=>`<div class="tr"><div style="flex:1"><div class="tx">${x.descricao}</div><div class="txm"><span class="badge b3" style="font-size:10px">${x.cat}</span>${x.banco?`<span class="badge b0">${x.banco}</span>`:''}<span class="dt">${fd(x.data)}</span></div></div><div style="text-align:right;flex-shrink:0"><div class="amt">${Number(x.val).toFixed(2)}</div><div class="amtc">${x.cur}</div></div><button class="xb" style="font-size:14px;opacity:.6;margin-right:2px" onclick="openEditG('${x.id}','${(x.descricao||'').replace(/'/g,"\\'")}',${x.val},'${x.cur}','${x.cat}','${x.banco||''}','${x.data||''}')">✏️</button><button class="xb" onclick="delG('${x.id}')">×</button></div>`).join(''):'<div class="empty">Nenhum gasto registrado</div>';
+  document.getElementById('glist').innerHTML=g.length?g.map(x=>`<div class="tr"><div style="flex:1"><div class="tx">${x.descricao}</div><div class="txm"><span class="badge b3" style="font-size:10px">${x.cat}</span>${x.banco?`<span class="badge b0">${x.banco}</span>`:''}${x.pessoa?`<span class="badge b1">${x.pessoa}</span>`:''}<span class="dt">${fd(x.data)}</span></div></div><div style="text-align:right;flex-shrink:0"><div class="amt">${Number(x.val).toFixed(2)}</div><div class="amtc">${x.cur}</div></div><button class="xb" style="font-size:14px;opacity:.6;margin-right:2px" onclick="openEditG('${x.id}','${(x.descricao||'').replace(/'/g,"\\'")}',${x.val},'${x.cur}','${x.cat}','${x.banco||''}','${x.data||''}','${(x.pessoa||'').replace(/'/g,"\\'")}')">✏️</button><button class="xb" onclick="delG('${x.id}')">×</button></div>`).join(''):'<div class="empty">Nenhum gasto registrado</div>';
 }
 async function delG(id){await api('gastos','DELETE',null,'id=eq.'+id);renderGastos();}
-async function addGasto(){const desc=document.getElementById('gd').value.trim(),v=parseFloat(document.getElementById('gv').value);if(!desc||isNaN(v))return;await api('gastos','POST',{descricao:desc,val:v,cur:document.getElementById('gc').value,cat:document.getElementById('gcat').value,banco:document.getElementById('gbanco').value||null,data:document.getElementById('gdate').value||td()});['gd','gv'].forEach(i=>document.getElementById(i).value='');renderGastos();}
+async function addGasto(){const desc=document.getElementById('gd').value.trim(),v=parseFloat(document.getElementById('gv').value);if(!desc||isNaN(v))return;await api('gastos','POST',{descricao:desc,val:v,cur:document.getElementById('gc').value,cat:document.getElementById('gcat').value,banco:document.getElementById('gbanco').value||null,pessoa:document.getElementById('gp').value.trim()||null,data:document.getElementById('gdate').value||td()});['gd','gv','gp'].forEach(i=>document.getElementById(i).value='');renderGastos();}
 // IMPORTAR EXTRATO (CSV/Excel/PDF -> IA -> previa -> gastos)
 var impRows=[];var impFileName='';
 async function openTimeline(){
@@ -1006,13 +1009,14 @@ function addDiv(){const q=document.getElementById('dquem').value.trim(),v=parseF
 
 // EDIT GASTO
 let editGId=null;
-function openEditG(id,desc,val,cur,cat,banco,data){
+function openEditG(id,desc,val,cur,cat,banco,data,pessoa){
   editGId=id;
   document.getElementById('eg-desc').value=desc||'';
   document.getElementById('eg-val').value=val||'';
   document.getElementById('eg-cur').value=cur||'BRL';
   document.getElementById('eg-cat').value=cat||'Outro';
   document.getElementById('eg-banco').value=banco||'';
+  document.getElementById('eg-pessoa').value=pessoa||'';
   document.getElementById('eg-data').value=data||'';
   document.getElementById('edit-gasto-modal').style.display='flex';
 }
@@ -1022,7 +1026,7 @@ async function saveEditG(){
   const desc=document.getElementById('eg-desc').value.trim();
   const val=parseFloat(document.getElementById('eg-val').value);
   if(!desc||isNaN(val))return;
-  await api('gastos','PATCH',{descricao:desc,val,cur:document.getElementById('eg-cur').value,cat:document.getElementById('eg-cat').value,banco:document.getElementById('eg-banco').value||null,data:document.getElementById('eg-data').value||td()},'id=eq.'+editGId);
+  await api('gastos','PATCH',{descricao:desc,val,cur:document.getElementById('eg-cur').value,cat:document.getElementById('eg-cat').value,banco:document.getElementById('eg-banco').value||null,pessoa:document.getElementById('eg-pessoa').value.trim()||null,data:document.getElementById('eg-data').value||td()},'id=eq.'+editGId);
   closeEditG();renderGastos();
 }
 
@@ -1054,7 +1058,13 @@ async function renderGraf(){
   const d=await api('gastos','GET',null,'select=val,cur,cat,data&order=data.desc');
   const gastos=Array.isArray(d)?d:[];
   const t=ls('zentra-taxas',{usd:5.70,uyu:0.14});
-  const mes=tm();
+  var monthsData={}; gastos.forEach(function(g){var m=String(g.data||'').slice(0,7); if(m.length===7) monthsData[m]=1;});
+  var mlist=Object.keys(monthsData); if(mlist.indexOf(tm())<0) mlist.push(tm()); mlist.sort().reverse();
+  if(!window.grafMes || mlist.indexOf(window.grafMes)<0){ window.grafMes = monthsData[tm()] ? tm() : (Object.keys(monthsData).sort().reverse()[0]||tm()); }
+  const mes=window.grafMes;
+  var MN=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var _w=document.getElementById('graf-mes-wrap');
+  if(_w){ _w.innerHTML='<select id="graf-mes-sel" onchange="window.grafMes=this.value;renderGraf();" style="width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--cream);font-family:inherit">'+mlist.map(function(m){var p=m.split('-');var lb=MN[parseInt(p[1])-1]+' '+p[0];return '<option value="'+m+'"'+(m===mes?' selected':'')+'>'+lb+'</option>';}).join('')+'</select>'; }
 
   // Por categoria — mês atual
   const catMap={};
@@ -1066,11 +1076,15 @@ async function renderGraf(){
   const cores=['#6A8FD4','#E87AB8','#7AB8E8','#A8C4F0','#E8C87A','#7AE8B8','#E87A7A','#B87AE8'];
 
   const ctxCat=document.getElementById('chart-cat');
+  const emptyCat=document.getElementById('chart-cat-empty');
   if(chartCat){chartCat.destroy();chartCat=null;}
   if(catsK.length){
+    if(ctxCat)ctxCat.style.display='';
+    if(emptyCat)emptyCat.style.display='none';
     chartCat=new Chart(ctxCat,{type:'doughnut',data:{labels:catsK,datasets:[{data:catsK.map(c=>catMap[c].toFixed(2)),backgroundColor:cores,borderWidth:0}]},options:{plugins:{legend:{labels:{color:'#A0B4D8',font:{size:12}}}},cutout:'65%'}});
   } else {
-    ctxCat.parentElement.innerHTML='<div class="empty">Sem gastos este mês</div>';
+    if(ctxCat)ctxCat.style.display='none';
+    if(emptyCat)emptyCat.style.display='flex';
   }
 
   // Evolução mensal — últimos 6 meses
@@ -1085,7 +1099,8 @@ async function renderGraf(){
 
   // Resumo
   const totalMes=Object.values(catMap).reduce((s,v)=>s+v,0);
-  document.getElementById('graf-resumo').innerHTML=totalMes?`<div class="card" style="text-align:center"><div style="font-family:Georgia,serif;font-size:28px;color:var(--gold)">R$ ${totalMes.toFixed(0)}</div><div class="dt">total gasto em ${labMes[5]}</div></div>`:'';
+  var _ml=MN[parseInt(mes.split('-')[1])-1]+' '+mes.split('-')[0];
+  document.getElementById('graf-resumo').innerHTML=totalMes?`<div class="card" style="text-align:center"><div style="font-family:Georgia,serif;font-size:28px;color:var(--gold)">R$ ${totalMes.toFixed(0)}</div><div class="dt">total gasto em ${_ml}</div></div>`:'';
 }
 
 // HÁBITOS
