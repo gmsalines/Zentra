@@ -129,7 +129,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
   <input id="z-pass" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')zLogin()" style="width:100%;max-width:300px;padding:12px;margin-bottom:10px;border:1px solid #1E2A40;border-radius:10px;background:#04080F;color:#E8EEF8;font-size:15px;outline:none">
   <button onclick="zLogin()" style="width:100%;max-width:300px;padding:12px;border:none;border-radius:10px;background:#6A8FD4;color:#04080F;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">Entrar</button>
   <button onclick="zSignup()" style="width:100%;max-width:300px;padding:11px;margin-top:9px;border:1px solid #6A8FD4;border-radius:10px;background:transparent;color:#6A8FD4;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Criar conta</button>
+  <button onclick="zForgot()" style="background:transparent;border:none;color:#7A9CC8;font-size:13px;margin-top:12px;cursor:pointer;text-decoration:underline;font-family:inherit">Esqueci minha senha</button>
   <div id="z-err" style="color:#E87070;font-size:13px;margin-top:10px;min-height:18px"></div>
+</div>
+
+<div id="z-reset" style="display:none;position:fixed;inset:0;background:#0A0E1A;z-index:10000;flex-direction:column;align-items:center;justify-content:center;padding:2rem;">
+  <div style="font-family:Georgia,serif;font-size:26px;color:#E8EEF8;margin-bottom:6px">Nova senha</div>
+  <div style="font-size:13px;color:#7A9CC8;margin-bottom:1.2rem;text-align:center;max-width:300px">Crie uma nova senha para entrar na sua conta.</div>
+  <input id="z-newpass" type="password" placeholder="Nova senha (6+ caracteres)" autocomplete="new-password" onkeydown="if(event.key==='Enter')zSaveNewPass()" style="width:100%;max-width:300px;padding:12px;margin-bottom:10px;border:1px solid #1E2A40;border-radius:10px;background:#04080F;color:#E8EEF8;font-size:15px;outline:none">
+  <button onclick="zSaveNewPass()" style="width:100%;max-width:300px;padding:12px;border:none;border-radius:10px;background:#6A8FD4;color:#04080F;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">Salvar nova senha</button>
+  <div id="z-reset-err" style="color:#E87070;font-size:13px;margin-top:10px;min-height:18px"></div>
 </div>
 
 
@@ -1230,7 +1239,51 @@ async function zInit(){
   }
   document.getElementById('z-login').style.display='flex';
 }
-zInit();
+async function zForgot(){
+  const email=document.getElementById('z-email').value.trim();
+  const err=document.getElementById('z-err');
+  if(!email||!email.includes('@')){ err.style.color='#E87070'; err.textContent='Digite seu email no campo acima primeiro.'; return; }
+  err.style.color='#7A9CC8'; err.textContent='Enviando link...';
+  try{
+    const redir=location.origin+'/index.html';
+    await fetch(SUPA_URL+'/auth/v1/recover',{method:'POST',headers:{'apikey':SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,options:{redirect_to:redir}})});
+    err.style.color='#7AC88F'; err.textContent='Se o email existir, enviei um link de recuperacao. Nao chegou? Me escreve que eu reseto pra voce.';
+  }catch(e){ err.style.color='#E87070'; err.textContent='Erro ao enviar. Tente de novo.'; }
+}
+function zCheckRecovery(){
+  try{
+    var h=location.hash||'';
+    if(h.indexOf('type=recovery')>-1 || h.indexOf('access_token')>-1){
+      var p=new URLSearchParams(h.replace(/^#/,''));
+      var at=p.get('access_token');
+      if(at && (p.get('type')==='recovery' || h.indexOf('type=recovery')>-1)){
+        window._zRecoverTok=at;
+        var el=document.getElementById('z-reset'); if(el) el.style.display='flex';
+        var lg=document.getElementById('z-login'); if(lg) lg.style.display='none';
+        return true;
+      }
+    }
+  }catch(e){}
+  return false;
+}
+async function zSaveNewPass(){
+  var np=document.getElementById('z-newpass').value;
+  var err=document.getElementById('z-reset-err');
+  if(!np||np.length<6){ err.style.color='#E87070'; err.textContent='A senha precisa de 6+ caracteres.'; return; }
+  err.style.color='#7A9CC8'; err.textContent='Salvando...';
+  try{
+    var r=await fetch(SUPA_URL+'/auth/v1/user',{method:'PUT',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+window._zRecoverTok,'Content-Type':'application/json'},body:JSON.stringify({password:np})});
+    var d=await r.json().catch(function(){return {};});
+    if(r.ok && (d.id||d.user||d.email)){
+      err.style.color='#7AC88F'; err.textContent='Senha alterada! Redirecionando para o login...';
+      try{history.replaceState(null,'','/index.html');}catch(e){}
+      setTimeout(function(){ location.href='/index.html'; },1600);
+    } else {
+      err.style.color='#E87070'; err.textContent=(d.msg||d.error_description||d.error||'Nao consegui alterar. O link pode ter expirado, peca outro.');
+    }
+  }catch(e){ err.style.color='#E87070'; err.textContent='Erro ao salvar.'; }
+}
+if(!zCheckRecovery()) zInit();
 try{var _zn=localStorage.getItem('z-name');if(_zn){var _hg2=document.getElementById('hgreet');if(_hg2)_hg2.textContent=_zn;}}catch(e){}
 
 
