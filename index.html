@@ -125,18 +125,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 <div id="z-login" style="display:none;position:fixed;inset:0;background:#0A0E1A;z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:2rem;">
   <div style="font-family:Georgia,serif;font-size:30px;color:#E8EEF8;margin-bottom:2px">Zentra</div>
   <div style="font-size:13px;color:#7A9CC8;margin-bottom:1.5rem">Your missing wand.</div>
-  <input id="z-email" type="email" placeholder="Email" autocomplete="username" style="width:100%;max-width:300px;padding:12px;margin-bottom:10px;border:1px solid #1E2A40;border-radius:10px;background:#04080F;color:#E8EEF8;font-size:15px;outline:none">
-  <input id="z-pass" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')zLogin()" style="width:100%;max-width:300px;padding:12px;margin-bottom:10px;border:1px solid #1E2A40;border-radius:10px;background:#04080F;color:#E8EEF8;font-size:15px;outline:none">
+  <input id="z-email" type="email" placeholder="Email" data-zph="Email" autocomplete="username" style="width:100%;max-width:300px;padding:12px;margin-bottom:10px;border:1px solid #1E2A40;border-radius:10px;background:#04080F;color:#E8EEF8;font-size:15px;outline:none">
+  <input id="z-pass" type="password" placeholder="Senha" data-zph="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')zLogin()" style="width:100%;max-width:300px;padding:12px;margin-bottom:10px;border:1px solid #1E2A40;border-radius:10px;background:#04080F;color:#E8EEF8;font-size:15px;outline:none">
   <button onclick="zLogin()" style="width:100%;max-width:300px;padding:12px;border:none;border-radius:10px;background:#6A8FD4;color:#04080F;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">Entrar</button>
   <button onclick="zSignup()" style="width:100%;max-width:300px;padding:11px;margin-top:9px;border:1px solid #6A8FD4;border-radius:10px;background:transparent;color:#6A8FD4;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Criar conta</button>
   <button onclick="zForgot()" style="background:transparent;border:none;color:#7A9CC8;font-size:13px;margin-top:12px;cursor:pointer;text-decoration:underline;font-family:inherit">Esqueci minha senha</button>
+  <div style="display:flex;gap:8px;width:100%;max-width:300px;margin-top:20px">
+    <button class="z-lang-btn z-on" data-l="pt" onclick="setLang('pt')">PT</button>
+    <button class="z-lang-btn" data-l="es" onclick="setLang('es')">ES</button>
+    <button class="z-lang-btn" data-l="en" onclick="setLang('en')">EN</button>
+  </div>
   <div id="z-err" style="color:#E87070;font-size:13px;margin-top:10px;min-height:18px"></div>
 </div>
 
 <div id="z-reset" style="display:none;position:fixed;inset:0;background:#0A0E1A;z-index:10000;flex-direction:column;align-items:center;justify-content:center;padding:2rem;">
   <div style="font-family:Georgia,serif;font-size:26px;color:#E8EEF8;margin-bottom:6px">Nova senha</div>
   <div style="font-size:13px;color:#7A9CC8;margin-bottom:1.2rem;text-align:center;max-width:300px">Crie uma nova senha para entrar na sua conta.</div>
-  <input id="z-newpass" type="password" placeholder="Nova senha (6+ caracteres)" autocomplete="new-password" onkeydown="if(event.key==='Enter')zSaveNewPass()" style="width:100%;max-width:300px;padding:12px;margin-bottom:10px;border:1px solid #1E2A40;border-radius:10px;background:#04080F;color:#E8EEF8;font-size:15px;outline:none">
+  <input id="z-newpass" type="password" placeholder="Nova senha (6+ caracteres)" data-zph="Nova senha (6+ caracteres)" autocomplete="new-password" onkeydown="if(event.key==='Enter')zSaveNewPass()" style="width:100%;max-width:300px;padding:12px;margin-bottom:10px;border:1px solid #1E2A40;border-radius:10px;background:#04080F;color:#E8EEF8;font-size:15px;outline:none">
   <button onclick="zSaveNewPass()" style="width:100%;max-width:300px;padding:12px;border:none;border-radius:10px;background:#6A8FD4;color:#04080F;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">Salvar nova senha</button>
   <div id="z-reset-err" style="color:#E87070;font-size:13px;margin-top:10px;min-height:18px"></div>
 </div>
@@ -1315,11 +1320,14 @@ const ZDICT={
  'Peso':{es:'Peso',en:'Weight'},'Treino':{es:'Entreno',en:'Workout'},'Alimentação':{es:'Alimentación',en:'Nutrition'},
  'Sono':{es:'Sueño',en:'Sleep'},'Água':{es:'Agua',en:'Water'},'Medicamentos':{es:'Medicamentos',en:'Medications'},
  'Hábitos':{es:'Hábitos',en:'Habits'},'Idioma':{es:'Idioma',en:'Language'},'Tema':{es:'Tema',en:'Theme'},'Sair':{es:'Salir',en:'Log out'},
- 'Abas':{es:'Pestañas',en:'Tabs'},'Ícones':{es:'Iconos',en:'Icons'},'Cor de destaque':{es:'Color de acento',en:'Accent color'}
+ 'Abas':{es:'Pestañas',en:'Tabs'},'Ícones':{es:'Iconos',en:'Icons'},'Cor de destaque':{es:'Color de acento',en:'Accent color'},
+ 'Entrar':{es:'Entrar',en:'Sign in'},'Criar conta':{es:'Crear cuenta',en:'Create account'},'Esqueci minha senha':{es:'Olvidé mi contraseña',en:'Forgot my password'},
+ 'Nova senha':{es:'Nueva contraseña',en:'New password'},'Salvar nova senha':{es:'Guardar nueva contraseña',en:'Save new password'},'Crie uma nova senha para entrar na sua conta.':{es:'Crea una nueva contraseña para entrar en tu cuenta.',en:'Create a new password to access your account.'},
+ 'Email':{es:'Correo',en:'Email'},'Senha':{es:'Contraseña',en:'Password'},'Nova senha (6+ caracteres)':{es:'Nueva contraseña (6+ caracteres)',en:'New password (6+ characters)'}
 };
 let ZNODES=null;
 function zSnap(){ZNODES=[];var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null);var n;while(n=w.nextNode()){var t=n.textContent.trim();if(t&&ZDICT[t])ZNODES.push([n,t]);}}
-function setLang(l){localStorage.setItem('z-lang',l);if(!ZNODES)zSnap();ZNODES.forEach(function(p){p[0].textContent=(l==='pt'?p[1]:(ZDICT[p[1]][l]||p[1]));});document.querySelectorAll('.z-lang-btn').forEach(function(b){b.classList.toggle('z-on',b.dataset.l===l);});}
+function setLang(l){localStorage.setItem('z-lang',l);if(!ZNODES)zSnap();ZNODES.forEach(function(p){p[0].textContent=(l==='pt'?p[1]:(ZDICT[p[1]][l]||p[1]));});document.querySelectorAll('[data-zph]').forEach(function(e){var k=e.getAttribute('data-zph');e.placeholder=(l==='pt'?k:((ZDICT[k]&&ZDICT[k][l])||k));});document.documentElement.setAttribute('lang',l);document.querySelectorAll('.z-lang-btn').forEach(function(b){b.classList.toggle('z-on',b.dataset.l===l);});}
 const ZTHEMES={
  meianoite:{bg:'#0A0E1A',surface:'#060A12',surface2:'#04080F',gold:'#6A8FD4',gold2:'#A8C4F0',cream:'#E8EEF8',cream2:'#A0B4D8',moss:'#7AB8E8',terra:'#E87AB8',red:'#E87070',border:'#141C2E',border2:'#1E2A40',text:'#E8EEF8',text2:'#7A9CC8',text3:'#3A5A8A'},
  rose:{bg:'#160E14',surface:'#1F141C',surface2:'#120A10',gold:'#E0A9B0',gold2:'#F0C9CE',cream:'#F7ECEF',cream2:'#D8B8C0',moss:'#C9A0E0',terra:'#E89AB8',red:'#E87070',border:'#2A1A24',border2:'#3A2433',text:'#F7ECEF',text2:'#C49AAA',text3:'#7A5A68'},
