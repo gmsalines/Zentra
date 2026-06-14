@@ -730,7 +730,7 @@ async function renderHome(){
   try{
   const h=new Date().getHours();
   document.getElementById('hgreet').textContent='Gabi';
-  document.getElementById('hdate').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('hdate').textContent=new Date().toLocaleDateString((typeof ZLANG!=='undefined'&&ZLANG==='es')?'es-ES':(typeof ZLANG!=='undefined'&&ZLANG==='en')?'en-US':'pt-BR',{weekday:'long',day:'numeric',month:'long'});
   const [tr,br,gr]=await Promise.all([api('tasks','GET',null,'select=*'),api('bills','GET',null,'select=*'),api('gastos','GET',null,'select=*')]);
   const tasks=Array.isArray(tr)?tr:[],bills=Array.isArray(br)?br:[],gastos=Array.isArray(gr)?gr:[];
   const pend=tasks.filter(t=>!t.done);
@@ -1323,11 +1323,181 @@ const ZDICT={
  'Abas':{es:'Pestañas',en:'Tabs'},'Ícones':{es:'Iconos',en:'Icons'},'Cor de destaque':{es:'Color de acento',en:'Accent color'},
  'Entrar':{es:'Entrar',en:'Sign in'},'Criar conta':{es:'Crear cuenta',en:'Create account'},'Esqueci minha senha':{es:'Olvidé mi contraseña',en:'Forgot my password'},
  'Nova senha':{es:'Nueva contraseña',en:'New password'},'Salvar nova senha':{es:'Guardar nueva contraseña',en:'Save new password'},'Crie uma nova senha para entrar na sua conta.':{es:'Crea una nueva contraseña para entrar en tu cuenta.',en:'Create a new password to access your account.'},
- 'Email':{es:'Correo',en:'Email'},'Senha':{es:'Contraseña',en:'Password'},'Nova senha (6+ caracteres)':{es:'Nueva contraseña (6+ caracteres)',en:'New password (6+ characters)'}
+ 'Email':{es:'Correo',en:'Email'},'Senha':{es:'Contraseña',en:'Password'},'Nova senha (6+ caracteres)':{es:'Nueva contraseña (6+ caracteres)',en:'New password (6+ characters)'},
+ // Home
+ 'Carregando...':{es:'Cargando...',en:'Loading...'},
+ 'Nada para hoje 🎉':{es:'Nada para hoy 🎉',en:'Nothing for today 🎉'},
+ 'Nada nos próximos dias':{es:'Nada en los próximos días',en:'Nothing in the coming days'},
+ 'Erro ao carregar. Verifique sua conexão.':{es:'Error al cargar. Verifica tu conexión.',en:'Failed to load. Check your connection.'},
+ '📜 Linha do tempo':{es:'📜 Línea de tiempo',en:'📜 Timeline'},
+ // Trabalho
+ '🍅 Foco':{es:'🍅 Enfoque',en:'🍅 Focus'},
+ '⏱ Horas':{es:'⏱ Horas',en:'⏱ Hours'},
+ 'Limpar concluídas':{es:'Limpiar completadas',en:'Clear completed'},
+ 'Nova tarefa...':{es:'Nueva tarea...',en:'New task...'},
+ 'Cliente':{es:'Cliente',en:'Client'},
+ 'Alta':{es:'Alta',en:'High'},'Média':{es:'Media',en:'Medium'},'Baixa':{es:'Baja',en:'Low'},
+ 'País / notas (opcional)':{es:'País / notas (opcional)',en:'Country / notes (optional)'},
+ '+ Adicionar':{es:'+ Añadir',en:'+ Add'},
+ 'Ciclos hoje:':{es:'Ciclos hoy:',en:'Cycles today:'},
+ 'Iniciar':{es:'Iniciar',en:'Start'},'Resetar':{es:'Reiniciar',en:'Reset'},
+ '← Voltar':{es:'← Volver',en:'← Back'},
+ 'Horas':{es:'Horas',en:'Hours'},'Projeto':{es:'Proyecto',en:'Project'},
+ 'Descrição (opcional)':{es:'Descripción (opcional)',en:'Description (optional)'},
+ '+ Registrar horas':{es:'+ Registrar horas',en:'+ Log hours'},
+ '☕ Pausa':{es:'☕ Descanso',en:'☕ Break'},'Pausar':{es:'Pausar',en:'Pause'},'Continuar':{es:'Continuar',en:'Continue'},
+ 'Limpar tarefas de trabalho concluídas?':{es:'¿Limpiar tareas de trabajo completadas?',en:'Clear completed work tasks?'},
+ // Pessoal
+ '+ Adicionar meta':{es:'+ Añadir meta',en:'+ Add goal'},
+ 'Descrição da meta...':{es:'Descripción de la meta...',en:'Goal description...'},
+ 'Diária':{es:'Diaria',en:'Daily'},'Semanal':{es:'Semanal',en:'Weekly'},'Mensal':{es:'Mensual',en:'Monthly'},'Anual':{es:'Anual',en:'Yearly'},'Única':{es:'Única',en:'One-time'},
+ // Finanças comum
+ 'Investim.':{es:'Inversión',en:'Investments'},
+ 'Nome da conta':{es:'Nombre de la cuenta',en:'Bill name'},
+ 'Valor':{es:'Valor',en:'Amount'},
+ 'Banco (opcional)':{es:'Banco (opcional)',en:'Bank (optional)'},
+ 'Outro':{es:'Otro',en:'Other'},
+ 'Forma de pagamento':{es:'Forma de pago',en:'Payment method'},
+ 'Débito automático':{es:'Débito automático',en:'Auto-debit'},'Boleto':{es:'Boleto',en:'Boleto'},'Cartão de crédito':{es:'Tarjeta de crédito',en:'Credit card'},
+ '+ Adicionar conta':{es:'+ Añadir cuenta',en:'+ Add bill'},
+ 'Nenhuma conta cadastrada':{es:'Ninguna cuenta registrada',en:'No bills registered'},
+ // Finanças gastos
+ 'Descrição':{es:'Descripción',en:'Description'},
+ 'Transporte':{es:'Transporte',en:'Transport'},'Academia':{es:'Gimnasio',en:'Gym'},'Lazer':{es:'Ocio',en:'Leisure'},'Casa':{es:'Hogar',en:'Home'},'Banco':{es:'Banco',en:'Bank'},
+ 'De quem? (vazio = você)':{es:'¿De quién? (vacío = tú)',en:'Whose? (empty = you)'},
+ '⬆️ Importar extrato (CSV/Excel/PDF)':{es:'⬆️ Importar extracto (CSV/Excel/PDF)',en:'⬆️ Import statement (CSV/Excel/PDF)'},
+ '+ Adicionar gasto':{es:'+ Añadir gasto',en:'+ Add expense'},
+ 'Nenhum gasto registrado':{es:'Ningún gasto registrado',en:'No expenses logged'},
+ // Finanças orçamento
+ 'Taxas de câmbio para BRL':{es:'Tasas de cambio a BRL',en:'Exchange rates to BRL'},
+ 'Salvar taxas':{es:'Guardar tasas',en:'Save rates'},
+ 'Limite BRL':{es:'Límite BRL',en:'Limit BRL'},
+ '+ Definir limite':{es:'+ Definir límite',en:'+ Set limit'},
+ 'Nenhum orçamento definido':{es:'Ningún presupuesto definido',en:'No budget set'},
+ 'Taxas salvas!':{es:'¡Tasas guardadas!',en:'Rates saved!'},
+ // Finanças compras
+ 'Item':{es:'Artículo',en:'Item'},'Lista vazia':{es:'Lista vacía',en:'Empty list'},
+ // Finanças gráficos
+ 'Gastos por categoria':{es:'Gastos por categoría',en:'Spending by category'},
+ 'Sem gastos neste mês':{es:'Sin gastos este mes',en:'No spending this month'},
+ 'Evolução mensal (BRL)':{es:'Evolución mensual (BRL)',en:'Monthly trend (BRL)'},
+ // Finanças dívidas
+ 'Quem deve':{es:'Quién debe',en:'Who owes'},
+ 'Banco de recebimento':{es:'Banco de cobro',en:'Receiving bank'},
+ 'Efectivo':{es:'Efectivo',en:'Cash'},
+ '+ Registrar dívida':{es:'+ Registrar deuda',en:'+ Log debt'},
+ 'Nenhuma dívida':{es:'Ninguna deuda',en:'No debts'},
+ 'recebido':{es:'recibido',en:'received'},
+ // Finanças investimentos
+ 'Nome do investimento':{es:'Nombre de la inversión',en:'Investment name'},
+ 'Valor aplicado':{es:'Valor invertido',en:'Amount invested'},
+ 'Valor atual':{es:'Valor actual',en:'Current value'},
+ '+ Adicionar investimento':{es:'+ Añadir inversión',en:'+ Add investment'},
+ 'Nenhum investimento ainda':{es:'Ninguna inversión todavía',en:'No investments yet'},
+ 'Aplicado':{es:'Invertido',en:'Invested'},'Atual':{es:'Actual',en:'Current'},'Rendimento':{es:'Rendimiento',en:'Return'},
+ 'Novo valor atual (R$):':{es:'Nuevo valor actual (R$):',en:'New current value (R$):'},
+ 'Apagar investimento?':{es:'¿Borrar inversión?',en:'Delete investment?'},
+ // Finanças metas
+ 'Meta (ex: juntar p/ viagem)':{es:'Meta (ej: ahorrar p/ viaje)',en:'Goal (e.g. save for trip)'},
+ 'Valor alvo':{es:'Valor objetivo',en:'Target amount'},
+ 'Já guardado':{es:'Ya guardado',en:'Already saved'},
+ 'Nenhuma meta financeira ainda':{es:'Ninguna meta financiera todavía',en:'No financial goals yet'},
+ 'Quanto você já guardou (R$):':{es:'¿Cuánto has guardado ya (R$):',en:'How much have you saved (R$):'},
+ 'Apagar meta?':{es:'¿Borrar meta?',en:'Delete goal?'},
+ // Saúde
+ '← Saúde':{es:'← Salud',en:'← Health'},
+ 'Peso atual (kg)':{es:'Peso actual (kg)',en:'Current weight (kg)'},
+ 'Meta de peso (kg)':{es:'Meta de peso (kg)',en:'Weight goal (kg)'},
+ '+ Registrar':{es:'+ Registrar',en:'+ Log'},
+ 'esta semana':{es:'esta semana',en:'this week'},'dias acumulados':{es:'días acumulados',en:'days accumulated'},
+ 'Musculação':{es:'Musculación',en:'Strength training'},'Cardio':{es:'Cardio',en:'Cardio'},'Funcional':{es:'Funcional',en:'Functional'},
+ 'Minutos':{es:'Minutos',en:'Minutes'},'Calorias (opcional)':{es:'Calorías (opcional)',en:'Calories (optional)'},
+ 'Parte do corpo (ex: pernas, costas, peito...)':{es:'Parte del cuerpo (ej: piernas, espalda, pecho...)',en:'Body part (e.g. legs, back, chest...)'},
+ '+ Registrar treino':{es:'+ Registrar entreno',en:'+ Log workout'},
+ 'Dias acumulados':{es:'Días acumulados',en:'Days accumulated'},
+ 'Salvar':{es:'Guardar',en:'Save'},'Zerar sem.':{es:'Reiniciar sem.',en:'Reset week'},'Salvo!':{es:'¡Guardado!',en:'Saved!'},
+ 'Apagar os treinos desta semana?':{es:'¿Borrar los entrenos de esta semana?',en:'Delete this week\'s workouts?'},
+ 'Refeição (café, almoço, jantar...)':{es:'Comida (desayuno, almuerzo, cena...)',en:'Meal (breakfast, lunch, dinner...)'},
+ 'Proteína g':{es:'Proteína g',en:'Protein g'},
+ 'Meta kcal/dia':{es:'Meta kcal/día',en:'Goal kcal/day'},
+ 'Meta proteína g/dia':{es:'Meta proteína g/día',en:'Protein goal g/day'},
+ '+ Registrar refeição':{es:'+ Registrar comida',en:'+ Log meal'},
+ 'Refeição':{es:'Comida',en:'Meal'},
+ 'Horas dormidas':{es:'Horas dormidas',en:'Hours slept'},
+ '+ Add':{es:'+ Add',en:'+ Add'},
+ 'Meta diária (ml, padrão: 2000)':{es:'Meta diaria (ml, predet.: 2000)',en:'Daily goal (ml, default: 2000)'},
+ 'Salvar meta':{es:'Guardar meta',en:'Save goal'},
+ 'Nome (ex: Monjaro)':{es:'Nombre (ej: Monjaro)',en:'Name (e.g. Monjaro)'},
+ 'Dose':{es:'Dosis',en:'Dose'},
+ 'Frequência (ex: semanal, diário)':{es:'Frecuencia (ej: semanal, diario)',en:'Frequency (e.g. weekly, daily)'},
+ 'Nenhum medicamento':{es:'Ningún medicamento',en:'No medications'},
+ 'Hábitos de hoje':{es:'Hábitos de hoy',en:'Today\'s habits'},
+ 'Novo hábito...':{es:'Nuevo hábito...',en:'New habit...'},
+ '+ Adicionar hábito':{es:'+ Añadir hábito',en:'+ Add habit'},
+ 'Nenhum hábito ainda':{es:'Ningún hábito todavía',en:'No habits yet'},
+ // Tarefas compartido
+ '🔴 Alta':{es:'🔴 Alta',en:'🔴 High'},'🟡 Média':{es:'🟡 Media',en:'🟡 Medium'},'🟢 Baixa':{es:'🟢 Baja',en:'🟢 Low'},
+ 'Nenhuma tarefa pendente 🎉':{es:'Ninguna tarea pendiente 🎉',en:'No pending tasks 🎉'},
+ 'Nenhuma tarefa':{es:'Ninguna tarea',en:'No tasks'},
+ 'Nenhuma tarefa concluída':{es:'Ninguna tarea completada',en:'No completed tasks'},
+ 'Nenhuma meta ainda':{es:'Ninguna meta todavía',en:'No goals yet'},
+ 'Nenhuma hora registrada':{es:'Ninguna hora registrada',en:'No hours logged'},
+ // Modales
+ 'Editar tarefa':{es:'Editar tarea',en:'Edit task'},
+ 'Texto da tarefa...':{es:'Texto de la tarea...',en:'Task text...'},
+ 'Notas (opcional)':{es:'Notas (opcional)',en:'Notes (optional)'},
+ 'Editar gasto':{es:'Editar gasto',en:'Edit expense'},
+ 'Descrição...':{es:'Descripción...',en:'Description...'},
+ 'Editar conta':{es:'Editar cuenta',en:'Edit bill'},
+ 'Nome da conta...':{es:'Nombre de la cuenta...',en:'Bill name...'},
+ 'Importar extrato':{es:'Importar extracto',en:'Import statement'},
+ 'Fechar':{es:'Cerrar',en:'Close'},'Importar':{es:'Importar',en:'Import'},
+ 'Lendo arquivo...':{es:'Leyendo archivo...',en:'Reading file...'},
+ 'Analisando lancamentos com IA...':{es:'Analizando movimientos con IA...',en:'Analyzing entries with AI...'},
+ 'Arquivo vazio ou ilegivel.':{es:'Archivo vacío o ilegible.',en:'Empty or unreadable file.'},
+ 'Nenhum gasto encontrado no arquivo.':{es:'Ningún gasto encontrado en el archivo.',en:'No expenses found in the file.'},
+ 'A IA nao conseguiu extrair os lancamentos. Tenta um CSV mais simples (colunas data, descricao, valor).':{es:'La IA no pudo extraer los movimientos. Prueba un CSV más simple (columnas fecha, descripción, valor).',en:'The AI couldn\'t extract the entries. Try a simpler CSV (columns: date, description, amount).'},
+ 'Importando...':{es:'Importando...',en:'Importing...'},
+ 'Erro ao carregar.':{es:'Error al cargar.',en:'Failed to load.'},
+ 'Nada no histórico ainda':{es:'Nada en el historial todavía',en:'Nothing in the history yet'},
+ // Chat
+ 'Diga o que quer fazer':{es:'Dime qué quieres hacer',en:'Tell me what you want to do'},
+ 'Não entendi, pode repetir?':{es:'No entendí, ¿puedes repetir?',en:'I didn\'t understand, can you repeat?'},
+ '⚠️ Erro ao conectar. Tenta de novo!':{es:'⚠️ Error al conectar. ¡Inténtalo de nuevo!',en:'⚠️ Connection error. Try again!'},
+ // Login/signup/reset mensagens
+ 'Entrando...':{es:'Entrando...',en:'Signing in...'},
+ 'Email ou senha incorretos.':{es:'Correo o contraseña incorrectos.',en:'Incorrect email or password.'},
+ 'Erro ao conectar.':{es:'Error al conectar.',en:'Connection error.'},
+ 'Digite um email válido.':{es:'Escribe un correo válido.',en:'Enter a valid email.'},
+ 'A senha precisa de 6+ caracteres.':{es:'La contraseña necesita 6+ caracteres.',en:'Password needs 6+ characters.'},
+ 'Criando conta...':{es:'Creando cuenta...',en:'Creating account...'},
+ 'Conta criada! Agora toque em Entrar com o mesmo email e senha.':{es:'¡Cuenta creada! Ahora toca Entrar con el mismo correo y contraseña.',en:'Account created! Now tap Sign in with the same email and password.'},
+ 'Não consegui criar a conta. Esse email já existe?':{es:'No pude crear la cuenta. ¿Ese correo ya existe?',en:'Couldn\'t create the account. Does that email already exist?'},
+ 'Digite seu email no campo acima primeiro.':{es:'Escribe tu correo en el campo de arriba primero.',en:'Enter your email in the field above first.'},
+ 'Enviando link...':{es:'Enviando enlace...',en:'Sending link...'},
+ 'Erro ao enviar. Tente de novo.':{es:'Error al enviar. Inténtalo de nuevo.',en:'Failed to send. Try again.'},
+ 'Salvando...':{es:'Guardando...',en:'Saving...'},
+ 'Senha alterada! Redirecionando para o login...':{es:'¡Contraseña cambiada! Redirigiendo al inicio de sesión...',en:'Password changed! Redirecting to login...'},
+ 'Erro ao salvar.':{es:'Error al guardar.',en:'Failed to save.'},
+ // Áreas
+ 'Áreas personalizadas':{es:'Áreas personalizadas',en:'Custom areas'},
+ 'Novo item...':{es:'Nuevo ítem...',en:'New item...'},
+ 'Nada aqui ainda':{es:'Nada aquí todavía',en:'Nothing here yet'},
+ 'Nova área':{es:'Nueva área',en:'New area'},
+ 'Nome da área':{es:'Nombre del área',en:'Area name'},
+ 'Campos desta área':{es:'Campos de esta área',en:'Fields for this area'},
+ 'Nome do campo':{es:'Nombre del campo',en:'Field name'},
+ 'Texto':{es:'Texto',en:'Text'},'Número':{es:'Número',en:'Number'},'Data':{es:'Fecha',en:'Date'},
+ '+campo':{es:'+campo',en:'+field'},'Ícone':{es:'Icono',en:'Icon'},
+ '+ Adicionar área':{es:'+ Añadir área',en:'+ Add area'}
 };
-let ZNODES=null;
-function zSnap(){ZNODES=[];var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null);var n;while(n=w.nextNode()){var t=n.textContent.trim();if(t&&ZDICT[t])ZNODES.push([n,t]);}}
-function setLang(l){localStorage.setItem('z-lang',l);if(!ZNODES)zSnap();ZNODES.forEach(function(p){p[0].textContent=(l==='pt'?p[1]:(ZDICT[p[1]][l]||p[1]));});document.querySelectorAll('[data-zph]').forEach(function(e){var k=e.getAttribute('data-zph');e.placeholder=(l==='pt'?k:((ZDICT[k]&&ZDICT[k][l])||k));});document.documentElement.setAttribute('lang',l);document.querySelectorAll('.z-lang-btn').forEach(function(b){b.classList.toggle('z-on',b.dataset.l===l);});}
+let ZNODES=[];var ZSEEN=(window.WeakSet?new WeakSet():null);var ZLANG=localStorage.getItem('z-lang')||'pt';
+function ztTrans(orig,l){if(l==='pt')return orig;var t=orig.trim();if(!t||!ZDICT[t])return orig;return orig.split(t).join(ZDICT[t][l]||t);}
+function ztNode(n){if(!n||n.nodeType!==3)return;if(ZSEEN&&ZSEEN.has(n))return;var t=n.textContent.trim();if(t&&ZDICT[t]){if(ZSEEN)ZSEEN.add(n);ZNODES.push([n,n.textContent]);if(ZLANG!=='pt')n.textContent=ztTrans(n.textContent,ZLANG);}}
+function ztGrab(root){if(!root)return;if(root.nodeType===3){ztNode(root);return;}if(root.nodeType!==1)return;var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);var n;while(n=w.nextNode())ztNode(n);}
+function zSnap(){ztGrab(document.body);}
+function setLang(l){ZLANG=l;localStorage.setItem('z-lang',l);zSnap();ZNODES.forEach(function(p){p[0].textContent=ztTrans(p[1],l);});document.querySelectorAll('[data-zph]').forEach(function(e){var k=e.getAttribute('data-zph');e.placeholder=(l==='pt'?k:((ZDICT[k]&&ZDICT[k][l])||k));});document.documentElement.setAttribute('lang',l);document.querySelectorAll('.z-lang-btn').forEach(function(b){b.classList.toggle('z-on',b.dataset.l===l);});}
+try{var zMO=new MutationObserver(function(muts){if(ZLANG==='pt')return;for(var i=0;i<muts.length;i++){var a=muts[i].addedNodes;if(a)for(var j=0;j<a.length;j++)ztGrab(a[j]);}});zMO.observe(document.body,{childList:true,subtree:true});}catch(e){}
 const ZTHEMES={
  meianoite:{bg:'#0A0E1A',surface:'#060A12',surface2:'#04080F',gold:'#6A8FD4',gold2:'#A8C4F0',cream:'#E8EEF8',cream2:'#A0B4D8',moss:'#7AB8E8',terra:'#E87AB8',red:'#E87070',border:'#141C2E',border2:'#1E2A40',text:'#E8EEF8',text2:'#7A9CC8',text3:'#3A5A8A'},
  rose:{bg:'#160E14',surface:'#1F141C',surface2:'#120A10',gold:'#E0A9B0',gold2:'#F0C9CE',cream:'#F7ECEF',cream2:'#D8B8C0',moss:'#C9A0E0',terra:'#E89AB8',red:'#E87070',border:'#2A1A24',border2:'#3A2433',text:'#F7ECEF',text2:'#C49AAA',text3:'#7A5A68'},
