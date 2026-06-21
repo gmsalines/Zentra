@@ -601,6 +601,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
   </div>
 </div>
 
+<!-- CALDAY MODAL -->
+<div id="calday-modal" class="mo" onclick="if(event.target.id==='calday-modal')closeCalDay()">
+  <div class="moc">
+    <div id="calday-body" style="max-height:65vh;overflow:auto"></div>
+    <button class="btn" style="margin-top:10px;width:100%" onclick="closeCalDay()">Fechar</button>
+  </div>
+</div>
+
 
 <!-- EDIT BILL MODAL -->
 <div id="edit-bill-modal" class="mo" onclick="if(event.target.id==='edit-bill-modal')closeEditB()">
@@ -748,7 +756,7 @@ async function saveEdit(){
 
 // HOME
 var calY=new Date().getFullYear(),calM=new Date().getMonth();
-var _calTasks=[],_calBills=[],_calGastos=[];
+var _calTasks=[],_calBills=[],_calGastos=[],_calRegs=[];
 async function renderCal(tasks,bills,gastos){
   if(tasks!==undefined){_calTasks=tasks;_calBills=bills;_calGastos=gastos;}
   var y=calY,m=calM;
@@ -756,7 +764,8 @@ async function renderCal(tasks,bills,gastos){
   var yStr=String(y).padStart(4,'0'),mStr=String(m+1).padStart(2,'0');
   var from=yStr+'-'+mStr+'-01',to=yStr+'-'+mStr+'-'+String(lastDay.getDate()).padStart(2,'0');
   var regs=[];
-  try{var rr=await api('registros','GET',null,'select=data&data=gte.'+from+'&data=lte.'+to);regs=Array.isArray(rr)?rr:[];}catch(e){}
+  try{var rr=await api('registros','GET',null,'select=data,tipo,valor&data=gte.'+from+'&data=lte.'+to);regs=Array.isArray(rr)?rr:[];}catch(e){}
+  _calRegs=regs;
   var dm={};
   function _cd(dateStr,key){if(!dateStr)return;var d=parseInt(dateStr.slice(8,10),10);if(!dm[d])dm[d]={};dm[d][key]=true;}
   _calTasks.forEach(function(t){if(t.due&&t.due.slice(0,7)===yStr+'-'+mStr)_cd(t.due,'t');});
@@ -778,12 +787,44 @@ async function renderCal(tasks,bills,gastos){
     if(ev.b)dots+='<span class="zcal-dot" style="background:var(--red)"></span>';
     if(ev.g)dots+='<span class="zcal-dot" style="background:var(--terra)"></span>';
     if(ev.s)dots+='<span class="zcal-dot" style="background:var(--moss)"></span>';
-    h+='<div class="zcal-day'+(isT?' today':'')+'">'+d+(dots?'<div class="zcal-dots">'+dots+'</div>':'')+'</div>';
+    h+='<div class="zcal-day'+(isT?' today':'')+'" onclick="calDay('+d+')" style="cursor:pointer">'+d+(dots?'<div class="zcal-dots">'+dots+'</div>':'')+'</div>';
   }
   h+='</div>';
   var egrid=document.getElementById('z-cal-grid');if(egrid)egrid.innerHTML=h;
 }
 async function calNav(dir){calM+=dir;if(calM<0){calM=11;calY--;}if(calM>11){calM=0;calY++;}await renderCal();}
+function closeCalDay(){var m=document.getElementById('calday-modal');if(m)m.classList.remove('active');}
+async function calDay(d){
+  var dateStr=String(calY).padStart(4,'0')+'-'+String(calM+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  var label=d+' de '+['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][calM]+' '+calY;
+  var dayTasks=_calTasks.filter(function(t){return t.due&&t.due.slice(0,10)===dateStr;});
+  var dayBills=_calBills.filter(function(b){return b.due&&b.due.slice(0,10)===dateStr;});
+  var dayGastos=_calGastos.filter(function(g){return g.data&&g.data.slice(0,10)===dateStr;});
+  var dayRegs=_calRegs.filter(function(r){return r.data&&r.data.slice(0,10)===dateStr;});
+  var h='<div style="font-family:Georgia,serif;font-size:17px;color:var(--cream);margin-bottom:.75rem">'+label+'</div>';
+  if(dayTasks.length){
+    h+='<div class="sl" style="margin-top:.25rem">📌 Tarefas</div>';
+    dayTasks.forEach(function(t){h+='<div class="tr '+(t.done?'done':'')+'" style="margin-bottom:4px"><div style="flex:1"><div class="tx">'+(t.done?'<s>':'')+t.text+(t.done?'</s>':'')+'</div><div class="txm"><span class="badge '+(CL[t.cat]||'b2')+'">'+(CN[t.cat]||t.cat)+'</span>'+(t.prio?'<span class="dt"> '+t.prio+'</span>':'')+'</div></div></div>';});
+  }
+  if(dayBills.length){
+    h+='<div class="sl" style="margin-top:.5rem">🧾 Contas</div>';
+    dayBills.forEach(function(b){h+='<div class="tr" style="margin-bottom:4px"><div style="flex:1"><div class="tx">'+b.name+'</div><div class="txm"><span class="amt">'+b.val+'</span><span class="amtc"> '+b.cur+'</span>'+(b.banco?'<span class="badge b0"> '+b.banco+'</span>':'')+(b.paid?' <span style="color:var(--moss);font-size:12px">✓ paga</span>':'')+'</div></div></div>';});
+  }
+  if(dayGastos.length){
+    h+='<div class="sl" style="margin-top:.5rem">💸 Gastos</div>';
+    dayGastos.forEach(function(g){h+='<div class="tr" style="margin-bottom:4px"><div style="flex:1"><div class="tx">'+g.desc+'</div><div class="txm"><span class="amt">'+g.val+'</span><span class="amtc"> '+g.cur+'</span>'+(g.cat?'<span class="badge b2"> '+g.cat+'</span>':'')+'</div></div></div>';});
+  }
+  if(dayRegs.length){
+    h+='<div class="sl" style="margin-top:.5rem">🌿 Saúde</div>';
+    var ri={peso:'⚖️',academia:'🏋️',alimentacao:'🥗',sono:'😴',agua:'💧',med:'💊',habito:'✅'};
+    dayRegs.forEach(function(r){h+='<div class="tr" style="margin-bottom:4px"><div class="tx">'+(ri[r.tipo]||'📋')+' '+r.tipo+(r.valor?' — '+r.valor:'')+'</div></div>';});
+  }
+  if(!dayTasks.length&&!dayBills.length&&!dayGastos.length&&!dayRegs.length){
+    h+='<div class="empty" style="padding:1.5rem 0;text-align:center">Nada para este dia 🌙</div>';
+  }
+  document.getElementById('calday-body').innerHTML=h;
+  document.getElementById('calday-modal').classList.add('active');
+}
 async function renderHome(){
   try{
   const h=new Date().getHours();
