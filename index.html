@@ -90,6 +90,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 .dt{font-size:12px;color:var(--text3);}
 .ptime{font-family:Georgia,serif;font-size:64px;font-weight:700;color:var(--cream);line-height:1;text-align:center;}
 .plabel{font-size:13px;color:var(--text2);text-align:center;margin-top:.5rem;}
+.zcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;padding:.25rem .5rem;}
+.zcal-dow{text-align:center;font-size:9px;color:var(--text2);padding:2px 0;font-weight:600;letter-spacing:.5px;}
+.zcal-day{position:relative;text-align:center;padding:5px 2px 10px;border-radius:7px;font-size:12px;min-height:34px;transition:background .15s;}
+.zcal-day.other{color:var(--text3);opacity:.5;}
+.zcal-day.today{background:rgba(106,143,212,.2);color:var(--gold);font-weight:700;border:1px solid rgba(106,143,212,.35);}
+.zcal-dots{position:absolute;bottom:2px;left:0;right:0;display:flex;justify-content:center;gap:2px;}
+.zcal-dot{width:4px;height:4px;border-radius:50%;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -192,6 +199,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
     <div class="stat"><div class="sn" id="sm" style="color:var(--moss)">–</div><div class="sl-label">Gastos BRL</div></div>
   </div>
   <button class="btn" style="margin:.25rem 0 .75rem" onclick="openTimeline()">📜 Linha do tempo</button>
+  <div id="z-cal-wrap" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin:.5rem 0;padding:.5rem 0">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.1rem .75rem .25rem">
+      <button class="xb" style="font-size:20px;padding:2px 8px;color:var(--text2)" onclick="calNav(-1)">‹</button>
+      <span id="cal-title" style="font-size:13px;font-weight:600;color:var(--text)"></span>
+      <button class="xb" style="font-size:20px;padding:2px 8px;color:var(--text2)" onclick="calNav(1)">›</button>
+    </div>
+    <div id="z-cal-grid"></div>
+    <div style="display:flex;gap:.75rem;justify-content:center;padding:.4rem .5rem .2rem;font-size:10px;color:var(--text3)">
+      <span><span style="color:var(--gold);font-size:10px">●</span> Tarefas</span>
+      <span><span style="color:var(--red);font-size:10px">●</span> Contas</span>
+      <span><span style="color:var(--terra);font-size:10px">●</span> Gastos</span>
+      <span><span style="color:var(--moss);font-size:10px">●</span> Saúde</span>
+    </div>
+  </div>
   <div class="sl">Hoje</div><div id="htoday"><div class="empty" style="padding:1rem">Carregando...</div></div>
   <div class="sl">Próximos 3 dias</div><div id="hup"></div>
 </div>
@@ -726,6 +747,43 @@ async function saveEdit(){
 }
 
 // HOME
+var calY=new Date().getFullYear(),calM=new Date().getMonth();
+var _calTasks=[],_calBills=[],_calGastos=[];
+async function renderCal(tasks,bills,gastos){
+  if(tasks!==undefined){_calTasks=tasks;_calBills=bills;_calGastos=gastos;}
+  var y=calY,m=calM;
+  var firstDay=new Date(y,m,1),lastDay=new Date(y,m+1,0);
+  var yStr=String(y).padStart(4,'0'),mStr=String(m+1).padStart(2,'0');
+  var from=yStr+'-'+mStr+'-01',to=yStr+'-'+mStr+'-'+String(lastDay.getDate()).padStart(2,'0');
+  var regs=[];
+  try{var rr=await api('registros','GET',null,'select=data&data=gte.'+from+'&data=lte.'+to);regs=Array.isArray(rr)?rr:[];}catch(e){}
+  var dm={};
+  function _cd(dateStr,key){if(!dateStr)return;var d=parseInt(dateStr.slice(8,10),10);if(!dm[d])dm[d]={};dm[d][key]=true;}
+  _calTasks.forEach(function(t){if(t.due&&t.due.slice(0,7)===yStr+'-'+mStr)_cd(t.due,'t');});
+  _calBills.forEach(function(b){if(b.due&&b.due.slice(0,7)===yStr+'-'+mStr)_cd(b.due,'b');});
+  _calGastos.forEach(function(g){if(g.data&&g.data.slice(0,7)===yStr+'-'+mStr)_cd(g.data,'g');});
+  regs.forEach(function(r){if(r.data)_cd(r.data,'s');});
+  var MN=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var etitle=document.getElementById('cal-title');if(etitle)etitle.textContent=MN[m]+' '+y;
+  var startDow=firstDay.getDay(),dim=lastDay.getDate();
+  var now=new Date(),tdD=now.getDate(),tdM=now.getMonth(),tdY=now.getFullYear();
+  var h='<div class="zcal-grid">';
+  ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach(function(d){h+='<div class="zcal-dow">'+d+'</div>';});
+  for(var i=0;i<startDow;i++)h+='<div class="zcal-day other"></div>';
+  for(var d=1;d<=dim;d++){
+    var isT=d===tdD&&m===tdM&&y===tdY;
+    var ev=dm[d]||{};
+    var dots='';
+    if(ev.t)dots+='<span class="zcal-dot" style="background:var(--gold)"></span>';
+    if(ev.b)dots+='<span class="zcal-dot" style="background:var(--red)"></span>';
+    if(ev.g)dots+='<span class="zcal-dot" style="background:var(--terra)"></span>';
+    if(ev.s)dots+='<span class="zcal-dot" style="background:var(--moss)"></span>';
+    h+='<div class="zcal-day'+(isT?' today':'')+'">'+d+(dots?'<div class="zcal-dots">'+dots+'</div>':'')+'</div>';
+  }
+  h+='</div>';
+  var egrid=document.getElementById('z-cal-grid');if(egrid)egrid.innerHTML=h;
+}
+async function calNav(dir){calM+=dir;if(calM<0){calM=11;calY--;}if(calM>11){calM=0;calY++;}await renderCal();}
 async function renderHome(){
   try{
   const h=new Date().getHours();
@@ -751,6 +809,7 @@ async function renderHome(){
   const upB=bills.filter(b=>!b.paid&&b.due&&du(b.due)>0&&du(b.due)<=7);
   document.getElementById('htoday').innerHTML=[...todT.map(miniT),...todB.map(miniB)].join('')||'<div class="empty" style="padding:1rem">Nada para hoje 🎉</div>';
   document.getElementById('hup').innerHTML=[...upT.map(miniT),...upB.map(miniB)].join('')||'<div class="empty" style="padding:1rem">Nada nos próximos dias</div>';
+  renderCal(tasks,bills,gastos);
   }catch(e){console.error('renderHome error:',e);document.getElementById('htoday').innerHTML='<div class="empty" style="padding:1rem;color:var(--terra)">Erro ao carregar. Verifique sua conexão.</div>';}
 }
 
@@ -865,17 +924,14 @@ async function delMetaF(id){if(!confirm('Apagar meta?'))return;await api('metas_
 async function renderGastos(){
   const d=await api('gastos','GET',null,'select=*&order=data.desc');
   const g=Array.isArray(d)?d:[];
-  const brl=g.filter(x=>x.cur==='BRL').reduce((s,x)=>s+Number(x.val),0);
-  const uyu=g.filter(x=>x.cur==='UYU').reduce((s,x)=>s+Number(x.val),0);
-  const usd=g.filter(x=>x.cur==='USD').reduce((s,x)=>s+Number(x.val),0);
-  let sh='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.75rem">';
-  if(brl)sh+='<span class="badge b2">BRL '+brl.toFixed(0)+'</span>';
-  if(uyu)sh+='<span class="badge b0">UYU '+uyu.toFixed(0)+'</span>';
-  if(usd)sh+='<span class="badge b1">USD '+usd.toFixed(2)+'</span>';
-  sh+='</div>';
-  document.getElementById('gsum').innerHTML=sh;
+  const cm=tm();
+  const curM=g.filter(x=>String(x.data||'').slice(0,7)===cm);
+  const pastM=g.filter(x=>{var m=String(x.data||'').slice(0,7);return m.length===7&&m!==cm;});
+  function gastoSum(list){var c={};list.forEach(function(x){c[x.cur]=(c[x.cur]||0)+Number(x.val);});var order=['BRL','UYU','USD'],cls={BRL:'b2',UYU:'b0',USD:'b1'},h='';order.forEach(function(cur){if(c[cur]){h+='<span class="badge '+cls[cur]+'">'+cur+' '+c[cur].toFixed(cur==='USD'?2:0)+'</span>';delete c[cur];}});Object.keys(c).forEach(function(cur){if(c[cur])h+='<span class="badge b3">'+cur+' '+c[cur].toFixed(2)+'</span>';});return h;}
+  document.getElementById('gsum').innerHTML='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.75rem">'+(gastoSum(curM)||'<span class="dt">Sem gastos neste mês</span>')+'</div>';
   try{var il=await api('import_log','GET',null,'select=qtd,data&order=data.desc&limit=3');var ile=document.getElementById('implog');if(ile)ile.innerHTML=(Array.isArray(il)&&il.length)?('\u2b06\ufe0f Importa\u00e7\u00f5es recentes: '+il.map(function(x){return x.qtd+' em '+fd(x.data);}).join(' \u00b7 ')):'';}catch(e){}
-  document.getElementById('glist').innerHTML=g.length?g.map(x=>`<div class="tr"><div style="flex:1"><div class="tx">${x.descricao}</div><div class="txm"><span class="badge b3" style="font-size:10px">${x.cat}</span>${x.banco?`<span class="badge b0">${x.banco}</span>`:''}${x.pessoa?`<span class="badge b1">${x.pessoa}</span>`:''}<span class="dt">${fd(x.data)}</span></div></div><div style="text-align:right;flex-shrink:0"><div class="amt">${Number(x.val).toFixed(2)}</div><div class="amtc">${x.cur}</div></div><button class="xb" style="font-size:14px;opacity:.6;margin-right:2px" onclick="openEditG('${x.id}','${(x.descricao||'').replace(/'/g,"\\'")}',${x.val},'${x.cur}','${x.cat}','${x.banco||''}','${x.data||''}','${(x.pessoa||'').replace(/'/g,"\\'")}')">✏️</button><button class="xb" onclick="delG('${x.id}')">×</button></div>`).join(''):'<div class="empty">Nenhum gasto registrado</div>';
+  document.getElementById('glist').innerHTML=curM.length?curM.map(x=>`<div class="tr"><div style="flex:1"><div class="tx">${x.descricao}</div><div class="txm"><span class="badge b3" style="font-size:10px">${x.cat}</span>${x.banco?`<span class="badge b0">${x.banco}</span>`:''}${x.pessoa?`<span class="badge b1">${x.pessoa}</span>`:''}<span class="dt">${fd(x.data)}</span></div></div><div style="text-align:right;flex-shrink:0"><div class="amt">${Number(x.val).toFixed(2)}</div><div class="amtc">${x.cur}</div></div><button class="xb" style="font-size:14px;opacity:.6;margin-right:2px" onclick="openEditG('${x.id}','${(x.descricao||'').replace(/'/g,"\\'")}',${x.val},'${x.cur}','${x.cat}','${x.banco||''}','${x.data||''}','${(x.pessoa||'').replace(/'/g,"\\'")}')">✏️</button><button class="xb" onclick="delG('${x.id}')">×</button></div>`).join(''):'<div class="empty">Nenhum gasto registrado</div>';
+  if(pastM.length){var groups={};pastM.forEach(function(x){var m=String(x.data).slice(0,7);(groups[m]=groups[m]||[]).push(x);});var months=Object.keys(groups).sort().reverse();var loc=(typeof ZLANG!=='undefined'&&ZLANG==='es')?'es-ES':((typeof ZLANG!=='undefined'&&ZLANG==='en')?'en-US':'pt-BR');var H='<div class="z-sec-t" style="margin:1.3rem 0 .5rem">Histórico</div>';months.forEach(function(m){var p=m.split('-'),dObj=new Date(Number(p[0]),Number(p[1])-1,1);var label=dObj.toLocaleDateString(loc,{month:'long',year:'numeric'});label=label.charAt(0).toUpperCase()+label.slice(1);var rows=groups[m].map(function(x){return `<div class="tr"><div style="flex:1"><div class="tx">${x.descricao}</div><div class="txm"><span class="badge b3" style="font-size:10px">${x.cat}</span>${x.banco?`<span class="badge b0">${x.banco}</span>`:''}${x.pessoa?`<span class="badge b1">${x.pessoa}</span>`:''}<span class="dt">${fd(x.data)}</span></div></div><div style="text-align:right;flex-shrink:0"><div class="amt">${Number(x.val).toFixed(2)}</div><div class="amtc">${x.cur}</div></div><button class="xb" style="font-size:14px;opacity:.6;margin-right:2px" onclick="openEditG('${x.id}','${(x.descricao||'').replace(/'/g,"\\'")}',${x.val},'${x.cur}','${x.cat}','${x.banco||''}','${x.data||''}','${(x.pessoa||'').replace(/'/g,"\\'")}')">✏️</button><button class="xb" onclick="delG('${x.id}')">×</button></div>`;}).join('');H+='<details style="margin-bottom:6px"><summary style="cursor:pointer;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);font-weight:600">'+label+'<span style="float:right;font-weight:400">'+gastoSum(groups[m])+'</span></summary><div style="padding-top:6px">'+rows+'</div></details>';});document.getElementById('glist').innerHTML+=H;}
 }
 async function delG(id){await api('gastos','DELETE',null,'id=eq.'+id);renderGastos();}
 async function addGasto(){const desc=document.getElementById('gd').value.trim(),v=parseFloat(document.getElementById('gv').value);if(!desc||isNaN(v))return;await api('gastos','POST',{descricao:desc,val:v,cur:document.getElementById('gc').value,cat:document.getElementById('gcat').value,banco:document.getElementById('gbanco').value||null,pessoa:document.getElementById('gp').value.trim()||null,data:document.getElementById('gdate').value||td()});['gd','gv','gp'].forEach(i=>document.getElementById(i).value='');renderGastos();}
