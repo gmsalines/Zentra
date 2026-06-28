@@ -125,7 +125,7 @@ function buildServer() {
     inputSchema: z.object({
       descricao: z.string().min(2).max(200),
       val: z.number().positive(),
-      cur: z.enum(['BRL', 'UYU', 'USD']),
+      cur: z.enum(['BRL', 'UYU', 'USD', 'EUR', 'ARS', 'PYG']),
       cat: z.enum(['Alimentação', 'Transporte', 'Academia', 'Saúde', 'Lazer', 'Estudo', 'Casa', 'Outro']),
       banco: z.enum(['Nubank', 'Itaú', 'Inter', 'C6', 'Outro']).optional(),
       data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -138,7 +138,7 @@ function buildServer() {
 
   server.registerTool('zentra_financial_summary', {
     title: 'Financial Summary',
-    description: 'Resumo financeiro do mês: gastos por categoria, contas pendentes, totais por moeda. Busca câmbio oficial automático.',
+    description: 'Resumo financeiro do mês: gastos por categoria, contas pendentes, totais por moeda. Busca câmbio oficial automático do dia anterior.',
     inputSchema: z.object({
       month: z.string().regex(/^\d{4}-\d{2}$/).optional().describe('Mês YYYY-MM (padrão: mês atual)'),
       moeda_base: z.enum(['BRL', 'UYU', 'USD', 'EUR', 'ARS', 'PYG']).default('BRL').describe('Moeda de referência do usuário'),
@@ -149,6 +149,7 @@ function buildServer() {
   }, async ({ month, moeda_base, usd_rate, uyu_rate }) => {
     const m = month ?? thisMonth();
 
+    // Busca todas as taxas em paralelo
     const [rateUSD, rateUYU, rateARS, ratePYG, rateEUR] = await Promise.all([
       usd_rate ? Promise.resolve(usd_rate) : getCambio('USD', moeda_base),
       uyu_rate ? Promise.resolve(uyu_rate) : getCambio('UYU', moeda_base),
