@@ -3,6 +3,7 @@
 const MOEDAS = {
   USD: 'Dólar Americano',
   EUR: 'Euro',
+  BRL: 'Real Brasileiro',
   UYU: 'Peso Uruguaio',
   ARS: 'Peso Argentino',
   PYG: 'Guarani Paraguaio',
