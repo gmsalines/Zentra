@@ -1,7 +1,5 @@
 // api/cambio.js
 
-// ─── Configuração centralizada ────────────────────────────────────────────────
-
 const MOEDAS = {
   USD: 'Dólar Americano',
   EUR: 'Euro',
@@ -10,7 +8,7 @@ const MOEDAS = {
   PYG: 'Guarani Paraguaio',
 }
 
-// Códigos BCU para pares com base UYU
+// Códigos BCU
 const CODIGOS_BCU = { USD: '2225', EUR: '1111', ARS: '2109', BRL: '1500' }
 
 // ─── Utilitários de data ──────────────────────────────────────────────────────
@@ -21,7 +19,11 @@ function formatBCB(date) {
   return `${mm}-${dd}-${date.getFullYear()}`
 }
 
-function getDiaAnterior(date) {
+function formatISO(date) {
+  return date.toISOString().split('T')[0] // YYYY-MM-DD para BCU e Frankfurter
+}
+
+function diaUtilAnterior(date) {
   const d = new Date(date)
   d.setDate(d.getDate() - 1)
   while (d.getDay() === 0 || d.getDay() === 6) {
@@ -32,91 +34,93 @@ function getDiaAnterior(date) {
 
 // ─── Fontes de câmbio ────────────────────────────────────────────────────────
 
-// BCB PTAX — USD, EUR vs BRL
 async function getCotacaoPTAX(moeda, data) {
   const dataStr = formatBCB(data)
   const url = moeda === 'USD'
     ? `https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarDia(dataCotacao=@d)?@d='${dataStr}'&$top=1&$orderby=dataHoraCotacao%20desc&$format=json&$select=cotacaoVenda`
     : `https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoMoedaDia(moeda=@m,dataCotacao=@d)?@m='${moeda}'&@d='${dataStr}'&$top=1&$orderby=dataHoraCotacao%20desc&$format=json&$select=cotacaoVenda`
-  const res = await fetch(url)
-  const json = await res.json()
-  return json?.value?.[0]?.cotacaoVenda ?? null
+  try {
+    const res = await fetch(url)
+    const json = await res.json()
+    return json?.value?.[0]?.cotacaoVenda ?? null
+  } catch { return null }
 }
 
-// BCU SOAP — qualquer moeda vs UYU
+// BCU com formato XML correto (namespace cot: e data YYYY-MM-DD)
 async function getCotacaoBCU(moeda, data) {
   const codigo = CODIGOS_BCU[moeda]
   if (!codigo) return null
-  const dd = String(data.getDate()).padStart(2, '0')
-  const mm = String(data.getMonth() + 1).padStart(2, '0')
-  const yyyy = data.getFullYear()
-  const soapBody = `<?xml version="1.0" encoding="utf-8"?>
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Body>
-    <Execute xmlns="http://intermediate.bcu.gub.uy">
-      <Entrada>
-        <Monedas><Item>${codigo}</Item></Monedas>
-        <FechaDesde>${yyyy}${mm}${dd}</FechaDesde>
-        <FechaHasta>${yyyy}${mm}${dd}</FechaHasta>
-        <Grupo>0</Grupo>
-      </Entrada>
-    </Execute>
-  </soap:Body>
-</soap:Envelope>`
-  const res = await fetch(
-    'https://cotizaciones.bcu.gub.uy/wscotizaciones/servlet/awsbcucotizaciones',
-    { method: 'POST', headers: { 'Content-Type': 'text/xml; charset=utf-8' }, body: soapBody }
-  )
-  const xml = await res.text()
-  const match = xml.match(/<TCV>([\d.]+)<\/TCV>/)
-  return match ? parseFloat(match[1]) : null
+  const dataStr = formatISO(data)
+  const soapBody = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:cot="Cotiza">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <cot:wsbcucotizaciones.Execute>
+      <cot:Entrada>
+        <cot:Moneda>
+          <cot:item>${codigo}</cot:item>
+        </cot:Moneda>
+        <cot:FechaDesde>${dataStr}</cot:FechaDesde>
+        <cot:FechaHasta>${dataStr}</cot:FechaHasta>
+        <cot:Grupo>0</cot:Grupo>
+      </cot:Entrada>
+    </cot:wsbcucotizaciones.Execute>
+  </soapenv:Body>
+</soapenv:Envelope>`
+  try {
+    const res = await fetch(
+      'https://cotizaciones.bcu.gub.uy/wscotizaciones/servlet/awsbcucotizaciones',
+      { method: 'POST', headers: { 'Content-Type': 'text/xml; charset=utf-8' }, body: soapBody }
+    )
+    const xml = await res.text()
+    const match = xml.match(/<TCV>([\d.]+)<\/TCV>/)
+    return match ? parseFloat(match[1]) : null
+  } catch { return null }
 }
 
-// BNA (ArgentinaDatos) — ARS vs BRL via triangulação USD
 async function getCotacaoARS_BRL(data) {
   const yyyy = data.getFullYear()
   const mm = String(data.getMonth() + 1).padStart(2, '0')
   const dd = String(data.getDate()).padStart(2, '0')
-  const urlBNA = `https://api.argentinadatos.com/v1/cotizaciones/dolares/oficial/${yyyy}/${mm}/${dd}`
-  const [resBNA, usdBrl] = await Promise.all([
-    fetch(urlBNA),
-    getCotacaoPTAX('USD', data),
-  ])
-  if (!resBNA.ok) return null
-  const jsonBNA = await resBNA.json()
-  const usdArs = jsonBNA?.venta
-  if (!usdArs || !usdBrl) return null
-  return usdBrl / usdArs
+  try {
+    const [resBNA, usdBrl] = await Promise.all([
+      fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/oficial/${yyyy}/${mm}/${dd}`),
+      getCotacaoPTAX('USD', data),
+    ])
+    if (!resBNA.ok) return null
+    const jsonBNA = await resBNA.json()
+    const usdArs = jsonBNA?.venta
+    if (!usdArs || !usdBrl) return null
+    return usdBrl / usdArs
+  } catch { return null }
 }
 
-// PYG vs BRL via Frankfurter
 async function getCotacaoPYG_BRL(data) {
-  const yyyy = data.getFullYear()
-  const mm = String(data.getMonth() + 1).padStart(2, '0')
-  const dd = String(data.getDate()).padStart(2, '0')
-  const [resPYG, usdBrl] = await Promise.all([
-    fetch(`https://api.frankfurter.app/${yyyy}-${mm}-${dd}?from=USD&to=PYG`),
-    getCotacaoPTAX('USD', data),
-  ])
-  if (!resPYG.ok) return null
-  const jsonPYG = await resPYG.json()
-  const usdPyg = jsonPYG?.rates?.PYG
-  if (!usdPyg || !usdBrl) return null
-  return usdBrl / usdPyg
+  const dataStr = formatISO(data)
+  try {
+    const [resPYG, usdBrl] = await Promise.all([
+      fetch(`https://api.frankfurter.app/${dataStr}?from=USD&to=PYG`),
+      getCotacaoPTAX('USD', data),
+    ])
+    if (!resPYG.ok) return null
+    const jsonPYG = await resPYG.json()
+    const usdPyg = jsonPYG?.rates?.PYG
+    if (!usdPyg || !usdBrl) return null
+    return usdBrl / usdPyg
+  } catch { return null }
 }
 
-// ─── Lógica de resolução por par moeda/base ────────────────────────────────
+// ─── Resolução de taxa para uma data específica ───────────────────────────────
 
-async function resolverTaxa(moeda, base, data) {
-  // Mesmo par
+async function resolverTaxaParaData(moeda, base, data) {
   if (moeda === base) return 1
 
-  // Base BRL
   if (base === 'BRL') {
     if (moeda === 'USD') return await getCotacaoPTAX('USD', data)
     if (moeda === 'EUR') return await getCotacaoPTAX('EUR', data)
+    if (moeda === 'ARS') return await getCotacaoARS_BRL(data)
+    if (moeda === 'PYG') return await getCotacaoPYG_BRL(data)
     if (moeda === 'UYU') {
-      // UYU/BRL = (USD/BRL) ÷ (USD/UYU via BCU)
       const [usdBrl, usdUyu] = await Promise.all([
         getCotacaoPTAX('USD', data),
         getCotacaoBCU('USD', data),
@@ -124,24 +128,18 @@ async function resolverTaxa(moeda, base, data) {
       if (!usdBrl || !usdUyu) return null
       return usdBrl / usdUyu
     }
-    if (moeda === 'ARS') return await getCotacaoARS_BRL(data)
-    if (moeda === 'PYG') return await getCotacaoPYG_BRL(data)
   }
 
-  // Base UYU
   if (base === 'UYU') {
     if (moeda === 'USD') return await getCotacaoBCU('USD', data)
     if (moeda === 'EUR') return await getCotacaoBCU('EUR', data)
     if (moeda === 'ARS') return await getCotacaoBCU('ARS', data)
     if (moeda === 'BRL') return await getCotacaoBCU('BRL', data)
     if (moeda === 'PYG') {
-      // PYG/UYU = (USD/UYU via BCU) ÷ (USD/PYG via Frankfurter)
-      const yyyy = data.getFullYear()
-      const mm = String(data.getMonth() + 1).padStart(2, '0')
-      const dd = String(data.getDate()).padStart(2, '0')
+      const dataStr = formatISO(data)
       const [usdUyu, resPYG] = await Promise.all([
         getCotacaoBCU('USD', data),
-        fetch(`https://api.frankfurter.app/${yyyy}-${mm}-${dd}?from=USD&to=PYG`),
+        fetch(`https://api.frankfurter.app/${dataStr}?from=USD&to=PYG`),
       ])
       if (!usdUyu || !resPYG.ok) return null
       const jsonPYG = await resPYG.json()
@@ -151,10 +149,9 @@ async function resolverTaxa(moeda, base, data) {
     }
   }
 
-  // Base USD — triangulação via BRL
   if (base === 'USD') {
     const [taxaEmBRL, usdBrl] = await Promise.all([
-      resolverTaxa(moeda, 'BRL', data),
+      resolverTaxaParaData(moeda, 'BRL', data),
       getCotacaoPTAX('USD', data),
     ])
     if (!taxaEmBRL || !usdBrl) return null
@@ -164,7 +161,7 @@ async function resolverTaxa(moeda, base, data) {
   return null
 }
 
-// ─── Handler principal ────────────────────────────────────────────────────────
+// ─── Handler principal com retry automático ───────────────────────────────────
 
 export default async function handler(req, res) {
   const moeda = (req.query.moeda || '').toUpperCase()
@@ -178,22 +175,26 @@ export default async function handler(req, res) {
     })
   }
 
-  const basesValidas = ['BRL', 'UYU', 'USD']
-  if (!basesValidas.includes(base)) {
-    return res.status(400).json({ error: `Base inválida. Use: ${basesValidas.join(', ')}` })
+  if (!['BRL', 'UYU', 'USD'].includes(base)) {
+    return res.status(400).json({ error: 'Base inválida. Use: BRL, UYU ou USD' })
   }
 
-  const dataOperacao = dataParam ? new Date(dataParam + 'T12:00:00') : new Date()
-  const dataConsulta = getDiaAnterior(dataOperacao)
+  const dataInicio = dataParam ? new Date(dataParam + 'T12:00:00') : new Date()
 
   try {
-    const taxa = await resolverTaxa(moeda, base, dataConsulta)
+    // Retry: tenta até 5 dias úteis anteriores
+    let taxa = null
+    let dataConsulta = null
+    let d = diaUtilAnterior(dataInicio)
+
+    for (let i = 0; i < 5; i++) {
+      taxa = await resolverTaxaParaData(moeda, base, d)
+      if (taxa !== null) { dataConsulta = d; break }
+      d = diaUtilAnterior(d)
+    }
 
     if (taxa === null) {
-      return res.status(404).json({
-        error: 'Cotação não encontrada. Pode ser feriado — tente o dia anterior.',
-        dataConsulta: dataConsulta.toISOString().split('T')[0],
-      })
+      return res.status(404).json({ error: 'Cotação não encontrada após 5 tentativas.' })
     }
 
     const fontes = {
