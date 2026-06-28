@@ -29,6 +29,16 @@ const today = () => new Date().toISOString().slice(0, 10);
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 const lastDay = (ym) => { const [y, m] = ym.split('-').map(Number); return new Date(y, m, 0).toISOString().slice(0, 10); };
 
+// ── Busca câmbio automático via /api/cambio ───────────────────────────────────
+async function getCambio(moeda, base) {
+  try {
+    const res = await fetch(`https://zentra-jet.vercel.app/api/cambio?moeda=${moeda}&base=${base}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.taxa ?? null;
+  } catch { return null; }
+}
+
 // ── Build server (singleton per warm instance) ────────────────────────────────
 function buildServer() {
   const server = new McpServer({ name: 'zentra-mcp-server', version: '1.0.0' });
@@ -128,32 +138,55 @@ function buildServer() {
 
   server.registerTool('zentra_financial_summary', {
     title: 'Financial Summary',
-    description: 'Resumo financeiro do mês: gastos por categoria, contas pendentes, totais por moeda.',
+    description: 'Resumo financeiro do mês: gastos por categoria, contas pendentes, totais por moeda. Busca câmbio oficial automático.',
     inputSchema: z.object({
       month: z.string().regex(/^\d{4}-\d{2}$/).optional().describe('Mês YYYY-MM (padrão: mês atual)'),
-      usd_rate: z.number().positive().default(5.70),
-      uyu_rate: z.number().positive().default(0.14),
+      moeda_base: z.enum(['BRL', 'UYU', 'USD', 'EUR', 'ARS', 'PYG']).default('BRL').describe('Moeda de referência do usuário'),
+      usd_rate: z.number().positive().optional().describe('Taxa manual USD (ignora busca automática)'),
+      uyu_rate: z.number().positive().optional().describe('Taxa manual UYU (ignora busca automática)'),
     }).strict(),
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async ({ month, usd_rate, uyu_rate }) => {
+  }, async ({ month, moeda_base, usd_rate, uyu_rate }) => {
     const m = month ?? thisMonth();
+
+    const [rateUSD, rateUYU, rateARS, ratePYG, rateEUR] = await Promise.all([
+      usd_rate ? Promise.resolve(usd_rate) : getCambio('USD', moeda_base),
+      uyu_rate ? Promise.resolve(uyu_rate) : getCambio('UYU', moeda_base),
+      getCambio('ARS', moeda_base),
+      getCambio('PYG', moeda_base),
+      getCambio('EUR', moeda_base),
+    ]);
+
+    const rates = {
+      USD: rateUSD ?? 5.70,
+      UYU: rateUYU ?? 0.14,
+      ARS: rateARS ?? 0.0035,
+      PYG: ratePYG ?? 0.00085,
+      EUR: rateEUR ?? 6.20,
+      [moeda_base]: 1,
+    };
+
     const [gastos, bills] = await Promise.all([
       db('gastos', 'GET', `select=*&data=gte.${m}-01&data=lte.${lastDay(m)}`),
       db('bills', 'GET', 'select=*&paid=eq.false&order=due.asc'),
     ]);
+
     const byCur = {}, byCat = {};
-    let totalBRL = 0;
+    let totalBase = 0;
     gastos.forEach(g => {
       const v = Number(g.val);
       byCur[g.cur] = (byCur[g.cur] ?? 0) + v;
-      const brl = g.cur === 'BRL' ? v : g.cur === 'USD' ? v * usd_rate : v * uyu_rate;
-      byCat[g.cat] = (byCat[g.cat] ?? 0) + brl;
-      totalBRL += brl;
+      const emBase = g.cur === moeda_base ? v : v * (rates[g.cur] ?? 1);
+      byCat[g.cat] = (byCat[g.cat] ?? 0) + emBase;
+      totalBase += emBase;
     });
+
     const curStr = Object.entries(byCur).map(([c, v]) => `${c} ${v.toFixed(2)}`).join(' · ');
-    const catStr = Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([c, v]) => `  ${c}: R$ ${v.toFixed(0)}`).join('\n');
+    const catStr = Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([c, v]) => `  ${c}: ${moeda_base} ${v.toFixed(0)}`).join('\n');
     const billsStr = bills.length ? bills.slice(0, 5).map(b => `  • ${b.name} — ${b.cur} ${b.val}${b.due ? ` (vence ${b.due})` : ''}`).join('\n') : '  Nenhuma pendente 🎉';
-    return { content: [{ type: 'text', text: `📊 Resumo ${m}\n\n💸 ${curStr} · Total R$ ${totalBRL.toFixed(0)}\n\nPor categoria:\n${catStr || '  Sem dados'}\n\n📋 Contas:\n${billsStr}` }] };
+    const cambioInfo = `\n💱 Câmbio oficial (D-1): ${Object.entries(rates).filter(([c]) => c !== moeda_base).map(([c, r]) => `1 ${c} = ${moeda_base} ${Number(r).toFixed(4)}`).join(' · ')}`;
+
+    return { content: [{ type: 'text', text: `📊 Resumo ${m} · Base: ${moeda_base}\n\n💸 ${curStr} · Total ${moeda_base} ${totalBase.toFixed(0)}\n\nPor categoria:\n${catStr || '  Sem dados'}${cambioInfo}\n\n📋 Contas:\n${billsStr}` }] };
   });
 
   server.registerTool('zentra_pay_bill', {
@@ -197,7 +230,6 @@ function getServer() {
 
 // ── Vercel handler ────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
-  // CORS para Claude.ai e ChatGPT
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
