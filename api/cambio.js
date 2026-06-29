@@ -111,64 +111,63 @@ async function getCotacaoPYG_BRL(data) {
 // ─── Resolver taxa por par moeda/base ────────────────────────────────────────
 
 async function resolverTaxa(moeda, base, data) {
-  if (moeda === base) return 1
+  if (moeda === base) return { taxa: 1, triangulado: false, pivot: null }
+
+  const r = (taxa, triangulado = false, pivot = null) => ({ taxa, triangulado, pivot })
 
   // Base BRL
   if (base === 'BRL') {
-    if (moeda === 'USD') return await getCotacaoPTAX('USD', data)
-    if (moeda === 'EUR') return await getCotacaoPTAX('EUR', data)
-    if (moeda === 'ARS') return await getCotacaoARS_BRL(data)
-    if (moeda === 'PYG') return await getCotacaoPYG_BRL(data)
+    if (moeda === 'USD') return r(await getCotacaoPTAX('USD', data))
+    if (moeda === 'EUR') return r(await getCotacaoPTAX('EUR', data))
+    if (moeda === 'ARS') return r(await getCotacaoARS_BRL(data), true, 'USD via BNA + BCB PTAX')
+    if (moeda === 'PYG') return r(await getCotacaoPYG_BRL(data), true, 'USD via Frankfurter + BCB PTAX')
     if (moeda === 'UYU') {
-      // UYU/BRL = USD/BRL ÷ USD/UYU
       const [usdBrl, usdUyu] = await Promise.all([
         getCotacaoPTAX('USD', data),
         getCotacaoBCU('USD', data),
       ])
-      if (!usdBrl || !usdUyu) return null
-      return usdBrl / usdUyu
+      if (!usdBrl || !usdUyu) return r(null)
+      return r(usdBrl / usdUyu, true, 'USD via BCB PTAX + BCU')
     }
   }
 
-  // Base UYU — tudo via BCU
+  // Base UYU
   if (base === 'UYU') {
-    if (moeda === 'USD') return await getCotacaoBCU('USD', data)
-    if (moeda === 'EUR') return await getCotacaoBCU('EUR', data)
-    if (moeda === 'ARS') return await getCotacaoBCU('ARS', data)
+    if (moeda === 'USD') return r(await getCotacaoBCU('USD', data))
+    if (moeda === 'EUR') return r(await getCotacaoBCU('EUR', data))
+    if (moeda === 'ARS') return r(await getCotacaoBCU('ARS', data))
     if (moeda === 'BRL') {
-      // BRL não está no BCU — triangula via USD
       const [usdUyu, usdBrl] = await Promise.all([
         getCotacaoBCU('USD', data),
         getCotacaoPTAX('USD', data),
       ])
-      if (!usdUyu || !usdBrl) return null
-      return usdUyu / usdBrl
+      if (!usdUyu || !usdBrl) return r(null)
+      return r(usdUyu / usdBrl, true, 'USD via BCU + BCB PTAX')
     }
     if (moeda === 'PYG') {
-      // PYG/UYU = USD/UYU ÷ USD/PYG
       const dataISO = formatISO(data)
       const [usdUyu, resPYG] = await Promise.all([
         getCotacaoBCU('USD', data),
         fetch(`https://api.frankfurter.app/${dataISO}?from=USD&to=PYG`),
       ])
-      if (!usdUyu || !resPYG.ok) return null
+      if (!usdUyu || !resPYG.ok) return r(null)
       const usdPyg = (await resPYG.json())?.rates?.PYG
-      if (!usdPyg) return null
-      return usdUyu / usdPyg
+      if (!usdPyg) return r(null)
+      return r(usdUyu / usdPyg, true, 'USD via BCU + Frankfurter')
     }
   }
 
-  // Base USD — triangulação via BRL
+  // Base USD
   if (base === 'USD') {
-    const [taxaEmBRL, usdBrl] = await Promise.all([
+    const [res, usdBrl] = await Promise.all([
       resolverTaxa(moeda, 'BRL', data),
       getCotacaoPTAX('USD', data),
     ])
-    if (!taxaEmBRL || !usdBrl) return null
-    return taxaEmBRL / usdBrl
+    if (!res?.taxa || !usdBrl) return r(null)
+    return r(res.taxa / usdBrl, true, `USD via BCB PTAX`)
   }
 
-  return null
+  return r(null)
 }
 
 // ─── Handler principal ────────────────────────────────────────────────────────
@@ -193,31 +192,23 @@ export default async function handler(req, res) {
   const dataConsulta = getDiaAnterior(dataOperacao)
 
   try {
-    const taxa = await resolverTaxa(moeda, base, dataConsulta)
+    const resultado = await resolverTaxa(moeda, base, dataConsulta)
 
-    if (taxa === null) {
+    if (!resultado?.taxa) {
       return res.status(404).json({
         error: 'Cotação não encontrada. Pode ser feriado — tente o dia anterior.',
         dataConsulta: dataConsulta.toISOString().split('T')[0],
       })
     }
 
-    const fontes = {
-      'USD/BRL': 'BCB PTAX', 'EUR/BRL': 'BCB PTAX',
-      'UYU/BRL': 'BCB PTAX + BCU (triangulação via USD)',
-      'ARS/BRL': 'Banco Nación Argentina + BCB PTAX',
-      'PYG/BRL': 'Frankfurter + BCB PTAX',
-      'USD/UYU': 'BCU', 'EUR/UYU': 'BCU', 'ARS/UYU': 'BCU', 'BRL/UYU': 'BCU',
-      'PYG/UYU': 'BCU + Frankfurter (triangulação via USD)',
-    }
-
     return res.status(200).json({
       moeda,
       moedaLabel: MOEDAS[moeda],
       base,
-      taxa: Number(taxa.toFixed(8)),
+      taxa: Number(resultado.taxa.toFixed(8)),
       dataConsulta: dataConsulta.toISOString().split('T')[0],
-      fonte: fontes[`${moeda}/${base}`] ?? 'Triangulação',
+      triangulado: resultado.triangulado,
+      ...(resultado.triangulado && { aviso: `Taxa calculada via arbitragem (pivot: ${resultado.pivot}). Não é cotação direta oficial.` }),
     })
 
   } catch (err) {
