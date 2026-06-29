@@ -135,7 +135,15 @@ async function resolverTaxa(moeda, base, data) {
     if (moeda === 'USD') return await getCotacaoBCU('USD', data)
     if (moeda === 'EUR') return await getCotacaoBCU('EUR', data)
     if (moeda === 'ARS') return await getCotacaoBCU('ARS', data)
-    if (moeda === 'BRL') return await getCotacaoBCU('BRL', data)
+    if (moeda === 'BRL') {
+      // BRL não está no BCU — triangula via USD
+      const [usdUyu, usdBrl] = await Promise.all([
+        getCotacaoBCU('USD', data),
+        getCotacaoPTAX('USD', data),
+      ])
+      if (!usdUyu || !usdBrl) return null
+      return usdUyu / usdBrl
+    }
     if (moeda === 'PYG') {
       // PYG/UYU = USD/UYU ÷ USD/PYG
       const dataISO = formatISO(data)
