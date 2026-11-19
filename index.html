@@ -164,7 +164,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
 <div id="s-home" class="screen active">
   <div class="topbar">
     <div class="trow">
-      <div><div class="tdate" id="hdate"></div><div class="ttitle" id="hgreet">Gabi</div></div>
+      <div><div class="tdate" id="hdate"></div><div class="ttitle" id="hgreet"></div></div>
       <svg width="110" height="32" viewBox="0 0 220 64" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- Clock left arc -->
   <path d="M22,8 A24,24 0 0,0 22,56" stroke="#6A8FD4" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
@@ -431,7 +431,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
   <div id="fin-ing" style="display:none">
     <div id="inglist"></div>
     <div class="ab">
-      <input id="ingd" placeholder="Descrição (ex: Salário Brinta)">
+      <input id="ingd" placeholder="Descrição (ex: Salário)">
       <div class="rr"><input id="ingv" type="number" placeholder="Valor" style="flex:1"><select id="ingc"><option>BRL</option><option>UYU</option><option>USD</option></select></div>
       <select id="ingcat"><option>Salário</option><option>Freelance</option><option>Investimentos</option><option>Outros</option></select>
       <input id="ingp" placeholder="De quem? (vazio = você)">
@@ -662,7 +662,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg
   </div>
   <div id="chat-msgs" style="flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;"></div>
   <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center">
-    <input id="chat-input" placeholder="Ex: add tarefa reunião BRINTA sexta..." style="flex:1;padding:9px 12px;font-size:14px;border:1px solid var(--border2);border-radius:20px;background:var(--surface2);color:var(--cream);font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')sendChat()">
+    <input id="chat-input" placeholder="Ex: reunião sexta 10h, prioridade alta..." style="flex:1;padding:9px 12px;font-size:14px;border:1px solid var(--border2);border-radius:20px;background:var(--surface2);color:var(--cream);font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')sendChat()">
     <button onclick="sendChat()" style="width:38px;height:38px;border-radius:50%;background:var(--gold);border:none;cursor:pointer;font-size:18px;flex-shrink:0">➤</button>
   </div>
 </div>
@@ -852,7 +852,8 @@ async function calDay(d){
 async function renderHome(){
   try{
   const h=new Date().getHours();
-  document.getElementById('hgreet').textContent='Gabi';
+  var _zname=''; try{ _zname=localStorage.getItem('z-name')||''; }catch(e){}
+  document.getElementById('hgreet').textContent=_zname;
   document.getElementById('hdate').textContent=new Date().toLocaleDateString((typeof ZLANG!=='undefined'&&ZLANG==='es')?'es-ES':(typeof ZLANG!=='undefined'&&ZLANG==='en')?'en-US':'pt-BR',{weekday:'long',day:'numeric',month:'long'});
   const [tr,br,gr]=await Promise.all([api('tasks','GET',null,'select=*'),api('bills','GET',null,'select=*'),api('gastos','GET',null,'select=*')]);
   const tasks=Array.isArray(tr)?tr:[],bills=Array.isArray(br)?br:[],gastos=Array.isArray(gr)?gr:[];
@@ -1471,6 +1472,7 @@ try{var _zn=localStorage.getItem('z-name');if(_zn){var _hg2=document.getElementB
 
 // ===== ZENTRA DESIGN v2 (idioma + cores + icones + abas) =====
 const ZDICT={
+ 'Conectar WhatsApp':{es:'Conectar WhatsApp',en:'Connect WhatsApp'},'Verificando...':{es:'Verificando...',en:'Checking...'},
  'Início':{es:'Inicio',en:'Home'},'Trabalho':{es:'Trabajo',en:'Work'},'Pessoal':{es:'Personal',en:'Personal'},
  'Finanças':{es:'Finanzas',en:'Finances'},'Saúde':{es:'Salud',en:'Health'},'Urgentes':{es:'Urgentes',en:'Urgent'},
  'Pendentes':{es:'Pendientes',en:'Pending'},'Contas vencer':{es:'Cuentas a vencer',en:'Bills due'},
@@ -1678,20 +1680,22 @@ function buildIconsUI(){var ic=JSON.parse(localStorage.getItem('z-icons')||'{}')
 function zToggleSettings(){var p=document.getElementById('z-settings');p.style.display=p.style.display==='flex'?'none':'flex';if(p.style.display==='flex')zWaCheckStatus();}
 
 // ===== VINCULO WHATSAPP =====
+function zL(pt,es,en){var l=(typeof ZLANG!=='undefined')?ZLANG:'pt';return l==='es'?es:(l==='en'?(en||es):pt);}
 async function zWaCheckStatus(){
   var statusEl=document.getElementById('z-wa-status');
   if(!statusEl) return;
   var d=await api('whatsapp_links','GET',null,'select=phone,created_at');
-  if(Array.isArray(d)&&d.length){ statusEl.textContent='✅ Conectado ('+d[0].phone.replace('whatsapp:','')+')'; }
-  else { statusEl.textContent='Não conectado ainda.'; }
+  if(Array.isArray(d)&&d.length){ statusEl.textContent='✅ '+zL('Conectado','Conectado','Connected')+' ('+d[0].phone.replace('whatsapp:','')+')'; }
+  else { statusEl.textContent=zL('Não conectado ainda.','Todavía no conectado.','Not connected yet.'); }
 }
 async function zWaGenCode(){
   var box=document.getElementById('z-wa-box');
-  box.textContent='Gerando código...';
+  box.textContent=zL('Gerando código...','Generando código...','Generating code...');
   var code=String(Math.floor(100000+Math.random()*900000));
-  var r=await api('whatsapp_link_codes','POST',{code:code});
-  if(!Array.isArray(r)||!r.length){ box.textContent='Erro ao gerar código. Tenta de novo.'; return; }
-  box.innerHTML='1. No WhatsApp, envie <b>'+ZWA_SANDBOX_JOIN+'</b> para <b>+1 415 523 8886</b><br>2. Depois envie este código: <b style="font-size:16px">'+code+'</b><br><span style="opacity:.7">Expira em 15 min.</span>';
+  var lang=(ZLANG==='es')?'es':((ZLANG==='pt')?'pt':null);
+  var r=await api('whatsapp_link_codes','POST',{code:code,lang:lang});
+  if(!Array.isArray(r)||!r.length){ box.textContent=zL('Erro ao gerar código. Tenta de novo.','Error al generar el código. Probá de nuevo.','Could not generate the code. Try again.'); return; }
+  box.innerHTML=zL('1. No WhatsApp, envie ','1. En WhatsApp, mandá ','1. On WhatsApp, send ')+'<b>'+ZWA_SANDBOX_JOIN+'</b>'+zL(' para ',' al ',' to ')+'<b>+1 415 523 8886</b><br>'+zL('2. Depois envie este código: ','2. Después mandá este código: ','2. Then send this code: ')+'<b style="font-size:16px">'+code+'</b><br><span style="opacity:.7">'+zL('Expira em 15 min.','Vence en 15 min.','Expires in 15 min.')+'</span>';
 }
 // ===== AREAS PERSONALIZADAS =====
 var zNewIcon='📌';
@@ -1783,8 +1787,13 @@ function toggleChat(){
   chatOpen = !chatOpen;
   const panel = document.getElementById('chat-panel');
   panel.style.display = chatOpen ? 'flex' : 'none';
+  if(chatOpen){ var ci=document.getElementById('chat-input'); if(ci) ci.placeholder=zL('Ex: reunião sexta 10h, prioridade alta...','Ej: reunión el viernes a las 10, prioridad alta...','E.g.: meeting Friday 10am, high priority...'); }
   if(chatOpen && document.getElementById('chat-msgs').children.length === 0){
-    addMsg('bot', 'Oi Gabi! 👋 Pode me dizer o que quer fazer:\n\n• "add tarefa reunião BRINTA sexta alta"\n• "compra shampoo e café"\n• "gastei R$50 no mercado Nubank"\n• "quanto gastei esse mês?"\n• "registra treino musculação 60min"');
+    var zn=''; try{ zn=localStorage.getItem('z-name')||''; }catch(e){}
+    addMsg('bot', zL(
+      'Oi'+(zn?', '+zn:'')+'! 👋 Me diz o que quer fazer:\n\n• "reunião sexta 10h, prioridade alta"\n• "comprar shampoo e café"\n• "gastei R$50 no mercado"\n• "quanto gastei esse mês?"\n• "treinei 60 min de musculação"',
+      '¡Hola'+(zn?', '+zn:'')+'! 👋 Decime qué querés hacer:\n\n• "reunión el viernes a las 10, prioridad alta"\n• "comprar champú y café"\n• "gasté 500 pesos en el súper"\n• "¿cuánto gasté este mes?"\n• "entrené 60 min de musculación"',
+      'Hi'+(zn?', '+zn:'')+'! 👋 Tell me what you want to do:\n\n• "meeting Friday 10am, high priority"\n• "buy shampoo and coffee"\n• "spent $50 at the supermarket"\n• "how much did I spend this month?"\n• "worked out 60 min"'));
   }
   if(chatOpen) setTimeout(()=>document.getElementById('chat-input').focus(), 100);
 }
@@ -1815,6 +1824,7 @@ async function sbA(table, method, body, filter){
 }
 
 let zChatPending=null;
+let zChatHist=[];
 async function sendChat(){
   const input = document.getElementById('chat-input');
   const msg = input.value.trim();
@@ -1836,25 +1846,30 @@ async function sendChat(){
   const brlMes = gastos.filter(g=>g.cur==='BRL').reduce((s,g)=>s+Number(g.val),0);
 
   const pend = zChatPending; zChatPending = null;
-  const acoes = `- Adicionar tarefa: {"action":"add_task","text":"...","cat":"brinta|cliente|pessoal|estudo","prio":"alta|media|baixa","due":"YYYY-MM-DD ou null"} (categorias: trabalho/produto/brinta -> brinta; cliente -> cliente; pessoal/vida/casa/mercado -> pessoal; estudo/aula/curso -> estudo; na duvida pessoal)
+  const acoes = `- Adicionar tarefa: {"action":"add_task","text":"...","cat":"brinta|cliente|pessoal|estudo","prio":"alta|media|baixa","due":"YYYY-MM-DD ou null"} (categorias: trabalho/trabajo/produto -> brinta; cliente -> cliente; pessoal/personal/vida/casa/mercado -> pessoal; estudo/estudio/aula/curso -> estudo; na duvida pessoal)
 - Adicionar compras: {"action":"add_compras","items":["item1","item2"]}
-- Registrar gasto: {"action":"add_gasto","descricao":"...","val":50,"cur":"BRL","cat":"Alimentacao","banco":"Nubank"}
-- Registrar treino: {"action":"add_treino","tipo":"musculacao","min":60}
-- Registrar peso: {"action":"add_peso","valor":"65.0"}`;
+- Conta A PAGAR (ainda nao paga: "me falta pagar", "tengo que pagar", "tenho que pagar", "vence", "a pagar", contas como luz/agua/internet/seguro/patente com valor): {"action":"add_conta","name":"...","val":2143,"cur":"UYU","due":"YYYY-MM-DD ou null"}
+- Gasto JA FEITO ("gastei", "gasté", "paguei", "pagué", "compré", "ingresa a los gastos"): {"action":"add_gasto","descricao":"...","val":50,"cur":"BRL","cat":"Alimentacao","banco":null}
+- Registrar treino: {"action":"add_treino","tipo":"musculacao","min":60,"cal":300,"data":"YYYY-MM-DD opcional"}
+- Registrar peso: {"action":"add_peso","valor":"65.0"}
+MOEDA: use a moeda que a pessoa disser; se usar "$" ou "pesos" sem pais e mencionar coisas do Uruguai (UTE, Antel, OSE, BPS, patente...), use UYU; "R$" ou "reais" = BRL; "US$"/"dolares" = USD.
+VARIOS ITENS numa mensagem (lista separada por virgula ou linhas): responda um ARRAY JSON com um objeto por item, ex.: [{"action":"add_conta",...},{"action":"add_conta",...}].`;
   let prompt;
   if(pend){
     prompt = `Voce e o assistente do Zentra. Hoje: ${todayStr}. O usuario tinha pedido para registrar: "${pend}". Agora ele respondeu: "${msg}". Decida AGORA e responda APENAS com JSON: se indicou TAREFA/lembrete use add_task (com o texto do item pendente e a categoria que ele disser); se indicou GASTO/despesa COM um valor use add_gasto. NUNCA pergunte de novo, NUNCA retorne action ask.
 ${acoes}`;
   } else {
-    prompt = `Voce e o assistente do app Zentra da Gabi. Responda em portugues ou espanhol conforme o usuario escrever.
+    prompt = `Voce e o assistente do app Zentra. Responda sempre no mesmo idioma em que o usuario escrever (portugues, espanhol ou ingles).
 Hoje: ${todayStr}. Amanha: ${tomorrowStr}.
+Conversa recente (para entender correcoes e referencias como "esos importes"):
+${zChatHist.slice(-6).map(h=>(h.u?'Usuario: ':'Assistente: ')+h.t).join('\n') || '(nenhuma)'}
 Tarefas pendentes: ${tasks.map(t=>t.text).join(', ')}.
 Gastos BRL este mes: R$${brlMes.toFixed(0)}.
 
 Quando o usuario pedir uma ACAO, responda APENAS com JSON (sem texto extra):
 ${acoes}
-REGRA: se a mensagem for AMBIGUA entre tarefa e gasto (ex.: "pagar X", "pagamento da escola") e NAO tiver um valor em dinheiro, NAO crie nada: responda {"action":"ask","item":"DESCRICAO CURTA"}. Se tiver valor, registre add_gasto.
-Para perguntas ou conversa, responda normalmente em texto.
+REGRA: "pagar X" COM valor e ainda nao pago -> add_conta. Gasto ja feito COM valor -> add_gasto. "pagar X" SEM valor -> add_task (lembrete). Seja flexivel com o jeito de cada pessoa escrever (erros, portunhol, abreviacoes): na duvida, prefira registrar algo a nao fazer nada. Se a pessoa corrigir ("ingresa como gastos", "eram gastos"), use o tipo que ela pediu para os itens que ela tinha mandado antes.
+Para perguntas ou conversa, responda normalmente em texto, no idioma do usuario.
 
 Usuario: ${msg}`;
   }
@@ -1866,12 +1881,37 @@ Usuario: ${msg}`;
       body: JSON.stringify({prompt})
     });
     const data = await res.json();
-    const reply = data?.choices?.[0]?.message?.content?.trim() || 'Não entendi, pode repetir?';
-    
+    if(data && data.error){ console.error('Zentra chat API error:', data.error); }
+    const reply = data?.choices?.[0]?.message?.content?.trim() || zL('Não entendi, pode repetir?','No te entendí, ¿me lo repetís?','Sorry, could you repeat that?');
+
     document.getElementById('typing-indicator')?.remove();
+    zChatHist.push({u:true,t:msg});
 
     let parsed = null;
-    try { parsed = JSON.parse(reply.replace(/```json|```/g,'').trim()); } catch(e) {}
+    const cleanedReply = reply.replace(/```json|```/g,'').trim();
+    try { parsed = JSON.parse(cleanedReply); } catch(e) {}
+    if(!parsed){ const ms = cleanedReply.match(/\{[^{}]*\}/g); if(ms){ const objs=[]; ms.forEach(m=>{ try{ const o=JSON.parse(m); if(o&&o.action) objs.push(o); }catch(e){} }); if(objs.length) parsed = objs.length===1?objs[0]:objs; } }
+
+    // Varios itens de uma vez (ex.: lista de contas)
+    if(Array.isArray(parsed)){
+      const acts = parsed.filter(a=>a&&a.action);
+      const done=[]; let lastNav=null;
+      for(const a of acts){
+        try{
+          if(a.action==='add_conta' && a.name){ await sbA('bills','POST',{name:a.name,val:Number(a.val)||0,cur:a.cur||'BRL',due:a.due||null,paid:false},null); done.push('💰 '+a.name+' '+(a.cur||'BRL')+' '+(a.val||'')); lastNav=['fin','contas']; }
+          else if(a.action==='add_gasto' && a.val){ await sbA('gastos','POST',{descricao:a.descricao,val:a.val,cur:a.cur||'BRL',cat:a.cat||'Outro',banco:a.banco||null,data:todayStr},null); done.push('🧾 '+a.descricao+' '+(a.cur||'BRL')+' '+a.val); lastNav=['fin','gastos']; }
+          else if(a.action==='add_task' && a.text){ await sbA('tasks','POST',{text:a.text,cat:a.cat||'pessoal',prio:a.prio||'media',due:a.due||null,done:false},null); done.push('📌 '+a.text); lastNav=[(a.cat==='brinta'||a.cat==='cliente')?'work':'pessoal']; }
+          else if(a.action==='add_compras' && Array.isArray(a.items)){ await Promise.all(a.items.map(n=>sbA('compras','POST',{nome:n,qtd:1,done:false},null))); done.push('🛒 '+a.items.join(', ')); lastNav=['fin','comp']; }
+          else if(a.action==='add_treino'){ await sbA('registros','POST',{tipo:'academia',valor:a.tipo||'musculacao',notas:[a.min?a.min+'min':'',a.cal?a.cal+'cal':''].filter(Boolean).join(', '),data:a.data||todayStr},null); done.push('🏋️ '+(a.tipo||'treino')); lastNav=['saude']; }
+          else if(a.action==='add_peso'){ await sbA('registros','POST',{tipo:'peso',valor:a.valor,data:todayStr},null); done.push('⚖️ '+a.valor+' kg'); lastNav=['saude']; }
+        }catch(e){ console.error(e); }
+      }
+      const txt = done.length ? ('✅ '+zL('Registrei','Registré','Saved')+' '+done.length+':\n'+done.join('\n')) : reply;
+      addMsg('bot', txt); zChatHist.push({u:false,t:txt});
+      if(lastNav) setTimeout(()=>navTo(lastNav[0],lastNav[1]),900);
+      return;
+    }
+    zChatHist.push({u:false,t:cleanedReply.slice(0,300)});
 
     function navTo(screen, tab){
       const nb=document.querySelector('.nb.on');
@@ -1882,12 +1922,12 @@ Usuario: ${msg}`;
     }
     if(parsed?.action === 'ask' && !pend){
       zChatPending = parsed.item || msg;
-      addMsg('bot', '"' + (parsed.item||msg) + '" e uma tarefa (lembrete) ou um gasto? Responda ex.: "tarefa pessoal" ou "gasto 300".');
+      addMsg('bot', '"' + (parsed.item||msg) + '" ' + zL('é uma tarefa (lembrete) ou um gasto? Responda ex.: "tarefa pessoal" ou "gasto 300".','¿es una tarea (recordatorio) o un gasto? Respondé por ej.: "tarea personal" o "gasto 300".','is it a task or an expense? Reply e.g. "personal task" or "expense 300".'));
       return;
     }
     if(parsed?.action === 'add_gasto' && (!parsed.val || Number(parsed.val) <= 0) && !pend){
       zChatPending = parsed.descricao || msg;
-      addMsg('bot', '"' + (parsed.descricao||msg) + '" e uma tarefa (lembrete) ou um gasto? Se for gasto, me diz o valor. Ex.: "tarefa pessoal" ou "gasto 300".');
+      addMsg('bot', '"' + (parsed.descricao||msg) + '" ' + zL('é uma tarefa (lembrete) ou um gasto? Se for gasto, me diz o valor. Ex.: "tarefa pessoal" ou "gasto 300".','¿es una tarea (recordatorio) o un gasto? Si es gasto, decime el monto. Ej.: "tarea personal" o "gasto 300".','is it a task or an expense? If it is an expense, tell me the amount.'));
       return;
     }
     if(parsed?.action === 'add_task'){
@@ -1912,6 +1952,10 @@ Usuario: ${msg}`;
       await sbA('registros','POST',{tipo:'peso',valor:parsed.valor,data:todayStr},null);
       addMsg('bot', '✅ Peso: ' + parsed.valor + ' kg — indo para Saúde...');
       setTimeout(()=>navTo('saude'),600);
+    } else if(parsed?.action === 'add_conta' && parsed.name){
+      await sbA('bills','POST',{name:parsed.name,val:Number(parsed.val)||0,cur:parsed.cur||'BRL',due:parsed.due||null,paid:false},null);
+      addMsg('bot', '✅ ' + zL('Conta a pagar','Cuenta por pagar','Bill to pay') + ': ' + parsed.name + ' ' + (parsed.cur||'BRL') + ' ' + (parsed.val||''));
+      setTimeout(()=>navTo('fin','contas'),600);
     } else {
       addMsg('bot', reply);
     }
